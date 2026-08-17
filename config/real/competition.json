@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "required_task_types": ["task_1", "task_2"],
+  "allow_any_order": true,
+  "reject_duplicate_execution": true,
+  "return_to_task_card_after_task_2": true,
+  "task_2_tts_blocks_execution": false,
+  "task_trigger": {
+    "wake_word": "小具同学",
+    "phrase": "请开始识别任务卡",
+    "match_policy": "any_single_character_from_phrase",
+    "first_command_requires_wake_word": true,
+    "later_commands_require_wake_word": false
+  },
+  "workspace_capture": {
+    "tray_panorama_once": true,
+    "block_capture_each_cycle": true,
+    "retry_once_while_stationary": true
+  },
+  "authorization": {
+    "single_competition_session": true,
+    "revoke_on_stop_fault_disconnect_restart_or_config_change": true
+  }
+}

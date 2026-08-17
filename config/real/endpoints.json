@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "robot_rpc": {
+    "host": "192.168.34.10",
+    "port": 30004,
+    "direction": "outbound",
+    "expected_service": "aubo_rpc"
+  },
+  "vision_service": {
+    "host": "127.0.0.1",
+    "port": 9001,
+    "direction": "outbound",
+    "expected_service": "real_mvs_vision"
+  },
+  "qt_command_listener": {
+    "host": "127.0.0.1",
+    "port": 8766,
+    "direction": "listen",
+    "expected_service": "competition_qt_command"
+  },
+  "speech_service": {
+    "host": "192.168.34.200",
+    "port": 8765,
+    "direction": "outbound",
+    "expected_service": "arm_speech_service",
+    "routes": {
+      "health": "/health",
+      "asr": "/v1/asr",
+      "tts": "/v1/tts"
+    }
+  },
+  "qwen_api": {
+    "transport": "https",
+    "credentials_env": "DASHSCOPE_API_KEY"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "output_type": "tool_digital_output",
+  "output_index": 0,
+  "enable_output_index": 1,
+  "enable_level": true,
+  "suction_level": false,
+  "release_level": true,
+  "feedback_mode": "none",
+  "feedback_index": null,
+  "feedback_active_level": null,
+  "confirmation_timeout_s": 2.0,
+  "real_wiring_verified": false,
+  "aperture": {
+    "output_type": "standard_digital_output",
+    "output_index": 0,
+    "on_level": true,
+    "off_level": false,
+    "real_wiring_verified": false
+  }
+}

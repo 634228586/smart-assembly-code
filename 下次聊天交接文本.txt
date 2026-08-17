@@ -1,0 +1,41 @@
+请接手我的“装配赛正式代码”真实机械臂比赛项目，继续在当前电脑和当前正式目录工作。
+
+请先完整阅读以下文件，并以第1个文件为最高优先级：
+1. E:\iwen-codex\装配赛正式代码\装配赛正式代码\HANDOFF.md
+2. E:\iwen-codex\装配赛正式代码\装配赛正式代码\README.md
+3. E:\iwen-codex\装配赛正式代码\装配赛正式代码\docs\比赛启动手册.md
+4. E:\iwen-codex\装配赛正式代码\装配赛正式代码\docs\真机示教与标定手册.md
+5. E:\iwen-codex\装配赛正式代码\装配赛正式代码\docs\现场待补参数.md
+
+旧历史交接 E:\iwen-codex\QT MAKING\HANDOFF.md 只用于追溯仿真开发；如与正式交接冲突，以正式目录HANDOFF.md和当前代码为准。不要恢复旧qt_learning、固定图片、mock识别、仿真标定、测试端口、旧安全Z/过渡点或旧“标准DO1控制吸盘”映射。
+
+固定正式运行目录：
+E:\iwen-codex\装配赛正式代码\装配赛正式代码
+
+当前版本0.4.5-point-move，状态hardware_validation_required。包内Python和依赖齐全，MVS Runtime已安装。全套56项无硬件测试通过，MANIFEST.sha256已更新并验证。机器人现场配置页四个固定关节点每行已有“移动到此点”按钮，确认后使用已保存正式点位和当前默认5%速度复用真实运动门控及到位等待；程序不提供碰撞规划。尚未完成真实相机采集闭环、真实九点、语音协议适配和完整真机比赛运动验收，不能宣称正式版完成。
+
+已经写入且不要重复询问：
+- AUBO端点192.168.34.1:30004，型号AUBO-i5H，控制器唯一名称rob1，稳定绑定身份AUBO-i5H|192.168.34.1|rob1；用户名root，密码只从Windows用户环境变量AUBO_RPC_PASSWORD读取。
+- 曾真实只读连接成功：SDK/Server 0.24.0，当时RobotMode Running、SafetyMode Normal、exec_id=-1、RuntimeMachine Stopped、TCP offset全零；已断开，未运动、未写IO。
+- TCP固定flange_zero_tcp，六项offset全零；四个关节点competition_standby/task_card_photo/blocks_photo/trays_photo已经从真实控制器读入motion.json，但尚未完整运动验收。
+- pick/place接触Z目前仍为0.1m候选值，需用界面的两个只读当前TCP Z按钮重新示教保存。
+- 相机唯一序列号DA3968689，眼在手；task_card不做九点，blocks/trays各自做真实九点。
+- AI盒子192.168.34.200:8765；/health曾返回200、ready=true、实际arm_speech_service/m28-4-real，但与正式客户端期望speech_release_server不一致且缺protocol_version/capabilities。/openapi.json和ASR/TTS协议尚未完成适配，禁止伪造身份或随便填协议。
+- DO0是光圈：True开、False关。吸盘使用工具数字输出：TOOL_IO[1]长期使能为1；TOOL_IO[0]为0时吸、1时放。禁止恢复旧DO1吸盘映射。
+- 用户已取消负载/重心、工具安装核验、真机运动总放行、批准哈希、重复汇总红项、吸盘及光圈real_wiring_verified的授权阻断，不要恢复。
+- 保守参数：比赛5%、最大15%；关节速度0.15rad/s、加速度0.30rad/s²；直线速度0.03m/s、加速度0.10m/s²；九点固定15%、0.03m/s、0.10m/s²、稳定1秒、X/Y步长20/15mm。
+- 固定拍照点直接MoveJoint，不增加过渡点、不做逐路线验收；程序没有碰撞规划。
+- 九点逐点双确认，失败/停止/重启整套作废从第1点重来；最大残差≤0.5mm、RMS≤0.3mm，并通过+X10mm、+Y10mm、0°、+10°四项验证。
+- 第一次语音监听需要“小具同学”，同场后续不要求；任务二有效数据不等待TTS，TTS失败不阻断，但ASR/TTS协议目前仍未适配完成。
+
+当前静态赛前只剩4项关键失败：三套MVS采集参数未真实回读批准；blocks六色未批准；trays六色未批准；blocks/trays两套真实九点均不存在。另需实际补pick/place真实接触Z和AI盒子协议适配。
+
+照片保存于data/sessions：任务卡在<session>/task_card/<request_id>.png，方块在blocks目录，托盘在trays目录，九点在<session>/calibration/<scene>/。截至2026-08-13实拍文件为0。任务卡识别精确使用本次返回的image_path；blocks/trays直接识别本次软件触发帧的内存图像并保存同一帧，不会扫描旧目录找“最新图片”。
+
+视觉协议不匹配已修复：frame_number、image_width、image_height、parameter_readback已纳入任务卡和blocks/trays严格schema并进行证据校验，其他未知字段仍拒绝；已补真实服务响应直连真实客户端的task_card/blocks/trays三条无硬件集成测试。该结果只确认代码协议链路一致，真实相机采集与比赛识别仍须现场验收后才能宣称打通。
+
+下一步按顺序：真实读取并批准三套MVS参数→blocks/trays真实六色拍照自动估算面积并批准→示教pick/place接触Z→完成两套九点与四项验证→按真实/openapi.json适配AI盒子→真实单点/下降/IO/单组/六组/双任务卡逐级验收。
+
+任何真实机器人、相机或IO操作前必须明确说明将连接什么、读取或动作什么；未经用户现场确认不得操作。可以静态检查、离屏启动、单元测试和不连接硬件的验证。所有代码修改后重新生成MANIFEST.sha256并运行全套无硬件测试。
+
+长期设备更换规则：更换机械臂/控制器后必须重新核对网络、RPC身份、状态、零法兰TCP、四个关节点、接触Z、IO、低速运动，并重做blocks/trays两套九点；更换语音盒子或升级服务后必须重新检查ping、8765、/health、/openapi.json、服务身份、ASR/TTS字段、首次“小具同学”唤醒和真实录音/播报；更换MVS相机/镜头/安装/分辨率后必须重做三套参数回读、两套六色批准和两套九点；更换大模型API Key/Base URL/模型名后必须重新做最小真实API调用和真实任务卡图片识别。旧设备通过状态不得直接复用。

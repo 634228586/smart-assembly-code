@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "sdk_family": "hikrobot_mvs",
+  "serial_number": "DA3968689",
+  "mounting": "eye_in_hand",
+  "fresh_frame_max_age_ms": 5000,
+  "profiles": {
+    "task_card": {
+      "approved": true,
+      "exposure_us": 40000.0,
+      "gain": 0.0,
+      "white_balance": {
+        "red": 2097.0,
+        "green": 1024.0,
+        "blue": 1559.0
+      },
+      "roi": {
+        "width": 3072,
+        "height": 2048,
+        "offset_x": 0,
+        "offset_y": 0
+      },
+      "trigger_mode": "software",
+      "requires_nine_point_calibration": false,
+      "approval_source": "operator_confirmed_without_preflight_readback"
+    },
+    "blocks": {
+      "approved": true,
+      "exposure_us": 40000.0,
+      "gain": 0.0,
+      "white_balance": {
+        "red": 2097.0,
+        "green": 1024.0,
+        "blue": 1559.0
+      },
+      "roi": {
+        "width": 3072,
+        "height": 2048,
+        "offset_x": 0,
+        "offset_y": 0
+      },
+      "trigger_mode": "software",
+      "requires_nine_point_calibration": true,
+      "detector": {
+        "approved": false,
+        "roi": [
+          0,
+          0,
+          3072,
+          2048
+        ],
+        "confidence_min": 0.6,
+        "min_area_px": 29823.0,
+        "max_area_px": 108834.0,
+        "hsv_ranges": {
+          "红": [
+            {
+              "lower": [
+                0,
+                130,
+                35
+              ],
+              "upper": [
+                7,
+                255,
+                255
+              ]
+            },
+            {
+              "lower": [
+                175,
+                130,
+                35
+              ],
+              "upper": [
+                179,
+                255,
+                255
+              ]
+            }
+          ],
+          "橙": [
+            {
+              "lower": [
+                8,
+                100,
+                45
+              ],
+              "upper": [
+                18,
+                255,
+                255
+              ]
+            }
+          ],
+          "黄": [
+            {
+              "lower": [
+                19,
+                120,
+                55
+              ],
+              "upper": [
+                30,
+                255,
+                255
+              ]
+            }
+          ],
+          "绿": [
+            {
+              "lower": [
+                45,
+                70,
+                15
+              ],
+              "upper": [
+                75,
+                255,
+                255
+              ]
+            }
+          ],
+          "蓝": [
+            {
+              "lower": [
+                105,
+                90,
+                18
+              ],
+              "upper": [
+                125,
+                255,
+                255
+              ]
+            }
+          ],
+          "紫": [
+            {
+              "lower": [
+                155,
+                65,
+                15
+              ],
+              "upper": [
+                174,
+                255,
+                255
+              ]
+            }
+          ]
+        }
+      },
+      "approval_source": "operator_confirmed_without_preflight_readback"
+    },
+    "trays": {
+      "approved": true,
+      "exposure_us": 40000.0,
+      "gain": 0.0,
+      "white_balance": {
+        "red": 2097.0,
+        "green": 1024.0,
+        "blue": 1559.0
+      },
+      "roi": {
+        "width": 3072,
+        "height": 2048,
+        "offset_x": 0,
+        "offset_y": 0
+      },
+      "trigger_mode": "software",
+      "requires_nine_point_calibration": true,
+      "detector": {
+        "approved": false,
+        "roi": [
+          0,
+          0,
+          3072,
+          2048
+        ],
+        "confidence_min": 0.6,
+        "min_area_px": 22642.0,
+        "max_area_px": 78168.0,
+        "hsv_ranges": {
+          "红": [
+            {
+              "lower": [
+                3,
+                120,
+                30
+              ],
+              "upper": [
+                8,
+                255,
+                255
+              ]
+            }
+          ],
+          "橙": [
+            {
+              "lower": [
+                9,
+                120,
+                45
+              ],
+              "upper": [
+                20,
+                255,
+                255
+              ]
+            }
+          ],
+          "黄": [
+            {
+              "lower": [
+                20,
+                100,
+                55
+              ],
+              "upper": [
+                30,
+                255,
+                255
+              ]
+            }
+          ],
+          "绿": [
+            {
+              "lower": [
+                45,
+                45,
+                15
+              ],
+              "upper": [
+                70,
+                100,
+                35
+              ]
+            }
+          ],
+          "蓝": [
+            {
+              "lower": [
+                105,
+                100,
+                20
+              ],
+              "upper": [
+                120,
+                255,
+                255
+              ]
+            }
+          ],
+          "紫": [
+            {
+              "lower": [
+                0,
+                80,
+                12
+              ],
+              "upper": [
+                2,
+                255,
+                30
+              ]
+            },
+            {
+              "lower": [
+                170,
+                80,
+                12
+              ],
+              "upper": [
+                179,
+                255,
+                30
+              ]
+            }
+          ]
+        }
+      },
+      "approval_source": "operator_confirmed_without_preflight_readback"
+    }
+  }
+}

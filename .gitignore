@@ -1,0 +1,11 @@
+.runtime/
+.pytest_cache/
+__pycache__/
+*.pyc
+data/sessions/*
+!data/sessions/.gitkeep
+data/sessions.zip
+logs/**/*.log
+logs/evidence/*
+!logs/evidence/.gitkeep
+tmp/

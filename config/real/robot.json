@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "manufacturer": "AUBO",
+    "model": "AUBO-i5H",
+    "controller_robot_name": "rob1",
+    "serial_number": null,
+    "binding_id": "AUBO-i5H|192.168.34.10|rob1"
+  },
+  "login": {
+    "username": "root",
+    "password_env": "AUBO_RPC_PASSWORD"
+  },
+  "required_state": {
+    "robot_mode": "Running",
+    "safety_mode": "Normal",
+    "exec_id": -1,
+    "runtime_machine_running": true
+  },
+  "active_tcp": {
+    "name": "flange_zero_tcp",
+    "offset": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "tolerance": 1e-08
+  },
+  "payload": {
+    "mass_kg": "UNSET",
+    "center_of_gravity_m": "UNSET",
+    "verified_in_controller": false
+  },
+  "tool_mounting": {
+    "camera": "eye_in_hand",
+    "suction_cup": "coaxial_round_vertical",
+    "verified": false
+  }
+}

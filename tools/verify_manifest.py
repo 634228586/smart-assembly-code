@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "MANIFEST.sha256"
-EXCLUDED_PARTS = {".runtime", ".pytest_cache", "__pycache__", "logs", "sessions"}
+EXCLUDED_PARTS = {".git", ".runtime", ".pytest_cache", "__pycache__", "logs", "sessions"}
 EXCLUDED_FILES = {"data/sessions.zip"}
 
 

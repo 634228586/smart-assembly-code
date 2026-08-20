@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import math
 import time
 import unittest
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from app.robot_gateway import AuboRealGateway, MotionPermit, RobotGatewayError, RobotSnapshot
 
@@ -163,6 +164,8 @@ class RobotGatewaySafetyTest(unittest.TestCase):
             RobotSnapshot("robot", "RobotMode.Running", "SafetyMode.Normal", (0,) * 6, target, (0,) * 6, -1, "RuntimeState.Running"),
             RobotSnapshot("robot", "RobotMode.Running", "SafetyMode.Normal", (0,) * 6, target, (0,) * 6, 153, "RuntimeState.Running"),
             RobotSnapshot("robot", "RobotMode.Running", "SafetyMode.Normal", (0,) * 6, target, (0,) * 6, -1, "RuntimeState.Running"),
+            RobotSnapshot("robot", "RobotMode.Running", "SafetyMode.Normal", (0,) * 6, target, (0,) * 6, -1, "RuntimeState.Running"),
+            RobotSnapshot("robot", "RobotMode.Running", "SafetyMode.Normal", (0,) * 6, target, (0,) * 6, -1, "RuntimeState.Running"),
         ])
         gateway.snapshot = lambda: next(snapshots)
 
@@ -172,6 +175,69 @@ class RobotGatewaySafetyTest(unittest.TestCase):
         )
 
         self.assertGreaterEqual(gateway.motion.exec_reads, 2)
+
+    def test_wait_allows_short_pose_status_settle_after_queue_finishes(self) -> None:
+        class RunningMotion(FakeMotion):
+            def getExecId(self): return 153
+
+        gateway = GatewayForTest(); gateway.motion = RunningMotion()
+        target = (0.4, 0.1, 0.5, 0.0, 0.0, 0.0)
+        snapshots = iter([
+            RobotSnapshot(
+                "robot", "RobotMode.Running", "SafetyMode.Normal", (0,) * 6,
+                (0.4012, 0.1, 0.5, 0.0, 0.0, 0.0), (0,) * 6, -1,
+                "RuntimeState.Running",
+            ),
+            RobotSnapshot(
+                "robot", "RobotMode.Running", "SafetyMode.Normal", (0,) * 6,
+                target, (0,) * 6, -1, "RuntimeState.Running",
+            ),
+            RobotSnapshot(
+                "robot", "RobotMode.Running", "SafetyMode.Normal", (0,) * 6,
+                target, (0,) * 6, -1, "RuntimeState.Running",
+            ),
+            RobotSnapshot(
+                "robot", "RobotMode.Running", "SafetyMode.Normal", (0,) * 6,
+                target, (0,) * 6, -1, "RuntimeState.Running",
+            ),
+        ])
+        gateway.snapshot = lambda: next(snapshots)
+
+        gateway._wait_until_target(
+            target, kind="tcp", position_tolerance=0.001,
+            orientation_tolerance=0.01, timeout_s=2.0,
+        )
+
+    def test_final_position_error_reports_target_actual_and_residual(self) -> None:
+        class RunningMotion(FakeMotion):
+            def getExecId(self): return 153
+
+        gateway = GatewayForTest(); gateway.motion = RunningMotion()
+        target = (0.4, 0.1, 0.5, 0.0, 0.0, 0.0)
+        gateway.snapshot = lambda: RobotSnapshot(
+            "robot", "RobotMode.Running", "SafetyMode.Normal", (0,) * 6,
+            (0.402, 0.1, 0.5, 0.0, 0.0, 0.0), (0,) * 6, -1,
+            "RuntimeState.Running",
+        )
+
+        with patch("app.robot_gateway.FINAL_TARGET_SETTLE_S", 0.0):
+            with self.assertRaisesRegex(
+                RobotGatewayError,
+                "最终位置误差超限.*目标TCP=.*实际TCP=.*Δ位置",
+            ):
+                gateway._wait_until_target(
+                    target, kind="tcp", position_tolerance=0.001,
+                    orientation_tolerance=0.01, timeout_s=2.0,
+                )
+
+    def test_orientation_comparison_accepts_equivalent_angles_across_pi_seam(self) -> None:
+        target = (0.4, 0.1, 0.5, math.pi - 0.001, 0.0, 0.0)
+        actual = (0.4, 0.1, 0.5, -math.pi + 0.001, 0.0, 0.0)
+
+        self.assertTrue(AuboRealGateway._target_reached(
+            actual, target, kind="tcp", position_tolerance=0.001,
+            orientation_tolerance=0.01,
+        ))
 
     def test_runtime_start_failure_prevents_motion(self) -> None:
         gateway = AuboRealGateway({"host": "unused", "port": 1}, {

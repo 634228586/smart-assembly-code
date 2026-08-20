@@ -68,7 +68,7 @@ class UiOffscreenTest(unittest.TestCase):
             self.assertFalse(hasattr(window, "tcp_table"))
             self.assertEqual(window.camera_profiles_table.rowCount(), 3)
             self.assertEqual(window.camera_profiles_table.columnCount(), 10)
-            self.assertEqual(window.camera_serial_edit.text(), "DA3968689")
+            self.assertEqual(window.camera_serial_edit.text(), "DA5723714")
             self.assertIn("不回读", window.validate_profiles_button.text())
             self.assertFalse(window.read_mvs_parameters_button.isVisible())
             self.assertTrue(window.detector_editor_group.isHidden())

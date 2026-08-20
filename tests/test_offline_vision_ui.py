@@ -9,7 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtWidgets import QApplication
 
-from app.offline_vision_tool import HsvRangeDialog, OfflineVisionWindow, REASON_LABELS
+from app.offline_vision_tool import HsvRangeDialog, OfflineVisionWindow, REASON_LABELS, TEMP_TEST_HSV_RANGES
 from tests.test_offline_analyzer import detector, write_synthetic
 
 
@@ -51,6 +51,13 @@ class OfflineVisionUiTest(unittest.TestCase):
     def test_internal_rejection_reasons_have_chinese_labels(self) -> None:
         self.assertEqual(REASON_LABELS["area_above_max"], "面积高于最大值")
         self.assertEqual(REASON_LABELS["TARGET_NOT_FOUND"], "未找到符合条件的该颜色目标")
+
+    def test_startup_uses_temporary_test_hsv_ranges(self) -> None:
+        window = OfflineVisionWindow()
+        try:
+            self.assertEqual(window.detector["hsv_ranges"], TEMP_TEST_HSV_RANGES)
+        finally:
+            window.close()
 
     def test_hsv_table_round_trips_multiple_ranges(self) -> None:
         ranges = detector()["hsv_ranges"]

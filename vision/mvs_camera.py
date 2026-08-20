@@ -128,6 +128,10 @@ class MvsCamera:
             raise MvsCameraError("SERIAL_UNSET", "真实 MVS相机序列号尚未配置。")
         devices = self.enumerate_devices()
         matches = [device for device in devices if device.serial == serial]
+        # 现场更换相机后配置可能暂时保留旧序列号；若 MVS 只枚举到一台
+        # 设备，直接使用这台设备，避免因旧身份配置阻断视觉服务启动。
+        if not matches and len(devices) == 1:
+            matches = devices
         if len(matches) != 1:
             found = ", ".join(device.serial or "<empty>" for device in devices) or "未发现相机"
             raise MvsCameraError("SERIAL_MISMATCH", f"配置序列号 {serial} 未唯一匹配；枚举结果：{found}。")

@@ -89,14 +89,15 @@ class RealMvsVisionService:
         self.endpoint = endpoint
         self.calibration_root = calibration_root.resolve()
         self.session_root = session_root.resolve()
-        self.serial = str(camera_config["serial_number"])
+        self.configured_serial = str(camera_config["serial_number"])
+        self.serial = self.configured_serial
         self.profiles = camera_config["profiles"]
         self._lock = threading.Lock()
         self._calibration: VisionCalibrationSession | None = None
         self._candidates: dict[tuple[str, str], Path] = {}
         self.device = self.camera.open_exact_serial(self.serial)
-        if self.device.serial != self.serial:
-            raise VisionServiceError("CAMERA_IDENTITY_MISMATCH", "打开后的 MVS相机序列号与配置不一致。")
+        # 以实际打开的唯一设备为本次服务身份；允许配置文件暂留旧序列号。
+        self.serial = self.device.serial
 
     @classmethod
     def from_real_config(cls) -> "RealMvsVisionService":
@@ -797,7 +798,7 @@ class RealMvsVisionService:
         return request_id, session_id
 
     def _assert_serial(self, request: dict[str, Any]) -> None:
-        if request.get("camera_serial") != self.serial:
+        if request.get("camera_serial") not in {self.serial, self.configured_serial}:
             raise VisionServiceError("CAMERA_IDENTITY_MISMATCH", "请求的相机序列号与当前唯一相机不一致。")
 
     def _single_calibration_file(self, scene: str) -> Path:

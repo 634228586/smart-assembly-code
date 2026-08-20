@@ -457,17 +457,6 @@ class CompetitionWindow(QMainWindow):
 
     def _robot_config_page(self) -> QWidget:
         page = QWidget(); layout = QVBoxLayout(page)
-        warning = QLabel(
-            "编辑和保存本页数据不会连接机械臂、不会读取当前姿态、不会运动或写 IO；只有每行的“移动到此点”会在确认后连接并执行真实低速 MoveJoint。\n"
-            "程序不提供碰撞规划；移动前必须确认当前位置到目标点的整条路径无人且无障碍物。"
-        )
-        warning.setWordWrap(True); warning.setStyleSheet("padding:10px;background:#fff4cc;font-weight:600;")
-        layout.addWidget(warning)
-
-        tcp_note = QLabel("TCP已固定：控制器当前默认法兰TCP，offset=[0, 0, 0, 0, 0, 0]；本页无需填写。实际回读不再为零时，运动会被拒绝。")
-        tcp_note.setWordWrap(True); tcp_note.setStyleSheet("padding:10px;background:#e8f1ff;font-weight:600;")
-        layout.addWidget(tcp_note)
-
         points_group = QGroupBox("四个固定关节点（运行时使用 moveJoint）")
         points_layout = QVBoxLayout(points_group)
         unit_row = QHBoxLayout()
@@ -483,7 +472,8 @@ class CompetitionWindow(QMainWindow):
         self.points_table.setHorizontalHeaderLabels(("点位名称", "J1", "J2", "J3", "J4", "J5", "J6", "操作"))
         self.points_table.verticalHeader().setVisible(False)
         self.points_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.points_table.setMaximumHeight(185)
+        self.points_table.setMinimumHeight(220)
+        self.points_table.setMaximumHeight(260)
         self.points_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.points_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.move_point_buttons: dict[str, QPushButton] = {}
@@ -1437,7 +1427,28 @@ class CompetitionWindow(QMainWindow):
             x_edit.setText(str(config["step_x_mm"])); y_edit.setText(str(config["step_y_mm"]))
             index = self.calibration_color_combos[scene].findData(config["target_color"]); self.calibration_color_combos[scene].setCurrentIndex(max(0, index))
             self.calibration_auto_labels[scene].setText("一次连续完成")
+        self.calibration_candidate_label.setText(self._loaded_calibration_summary())
         self._refresh_calibration_automatic()
+
+    @staticmethod
+    def _loaded_calibration_summary() -> str:
+        lines = ["当前实际载入的正式九点标定："]
+        for scene, label in (("blocks", "Block"), ("trays", "Tray")):
+            path = REAL_CALIBRATION_DIR / scene / f"9point_{scene}.json"
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                created = str(payload.get("created_at") or "").strip()
+                if created:
+                    generated_at = datetime.fromisoformat(created.replace("Z", "+00:00")).astimezone().strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    generated_at = datetime.fromtimestamp(path.stat().st_mtime).astimezone().strftime("%Y-%m-%d %H:%M:%S（按文件修改时间）")
+                lines.append(
+                    f"{label}：生成于 {generated_at}，标定ID={payload.get('calibration_id', '未知')}，"
+                    f"approved={payload.get('approved', False)}"
+                )
+            except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+                lines.append(f"{label}：正式标定文件未能载入（{exc}）")
+        return "\n".join(lines)
 
     def _persist_calibration_settings(self) -> set[str]:
         scenes = {

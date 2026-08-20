@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from typing import Any, Callable, Sequence
 
 
+FINAL_TARGET_SETTLE_S = 0.5
+FINAL_TARGET_STABLE_READS = 3
+
+
 class RobotGatewayError(RuntimeError):
     pass
 
@@ -273,8 +277,66 @@ class AuboRealGateway:
         if kind == "joint":
             return max(abs(a - b) for a, b in zip(actual, target)) <= position_tolerance
         return (
-            max(abs(a - b) for a, b in zip(actual[:3], target[:3])) <= position_tolerance
-            and max(abs(a - b) for a, b in zip(actual[3:], target[3:])) <= orientation_tolerance
+            AuboRealGateway._target_position_reached(
+                actual, target, kind=kind, position_tolerance=position_tolerance,
+            )
+            and AuboRealGateway._target_orientation_reached(
+                actual, target, kind=kind, orientation_tolerance=orientation_tolerance,
+            )
+        )
+
+    @staticmethod
+    def _target_position_reached(
+        actual: tuple[float, ...],
+        target: tuple[float, ...],
+        *,
+        kind: str,
+        position_tolerance: float,
+    ) -> bool:
+        if kind == "joint":
+            return max(abs(a - b) for a, b in zip(actual, target)) <= position_tolerance
+        return max(abs(a - b) for a, b in zip(actual[:3], target[:3])) <= position_tolerance
+
+    @staticmethod
+    def _target_orientation_reached(
+        actual: tuple[float, ...],
+        target: tuple[float, ...],
+        *,
+        kind: str,
+        orientation_tolerance: float,
+    ) -> bool:
+        if kind == "joint":
+            return True
+        return max(
+            abs(AuboRealGateway._wrapped_angle_delta(a, b))
+            for a, b in zip(actual[3:], target[3:])
+        ) <= orientation_tolerance
+
+    @staticmethod
+    def _wrapped_angle_delta(actual: float, target: float) -> float:
+        """Return the shortest signed angular difference across the +/-pi seam."""
+
+        return (actual - target + math.pi) % (2.0 * math.pi) - math.pi
+
+    @staticmethod
+    def _target_error_details(actual: tuple[float, ...], target: tuple[float, ...], *, kind: str) -> str:
+        delta = tuple(actual_value - target_value for actual_value, target_value in zip(actual, target))
+        if kind == "joint":
+            return (
+                f"目标关节={list(target)}，实际关节={list(actual)}，"
+                f"Δ关节(rad)={list(delta)}，最大绝对误差={max(abs(value) for value in delta):.6f} rad"
+            )
+        position_delta_mm = tuple(value * 1000.0 for value in delta[:3])
+        orientation_delta_deg = tuple(
+            math.degrees(AuboRealGateway._wrapped_angle_delta(actual_value, target_value))
+            for actual_value, target_value in zip(actual[3:], target[3:])
+        )
+        return (
+            f"目标TCP={list(target)}，实际TCP={list(actual)}，"
+            f"Δ位置(mm)={list(position_delta_mm)}，"
+            f"Δ姿态(deg)={list(orientation_delta_deg)}，"
+            f"位置最大绝对误差={max(abs(value) for value in position_delta_mm):.3f} mm，"
+            f"姿态最大绝对误差={max(abs(value) for value in orientation_delta_deg):.3f}°"
         )
 
     def _wait_until_target(self, target: tuple[float, ...], *, kind: str, position_tolerance: float, orientation_tolerance: float, timeout_s: float, should_stop: Callable[[], bool] | None = None) -> None:
@@ -288,6 +350,8 @@ class AuboRealGateway:
         # 防止把“命令尚未入队”误判为“命令已经执行完成”。
         idle_target_since: float | None = None
         enqueue_observation_s = 1.0
+        final_target_settle_deadline: float | None = None
+        final_target_stable_reads = 0
         while time.monotonic() < start_deadline:
             if stop_requested():
                 self.stop_motion()
@@ -317,9 +381,25 @@ class AuboRealGateway:
             self._assert_snapshot_safe(snapshot)
             if snapshot.exec_id == -1:
                 actual = snapshot.joint_positions if kind == "joint" else snapshot.tcp_pose
-                if not self._target_reached(actual, target, kind=kind, position_tolerance=position_tolerance, orientation_tolerance=orientation_tolerance):
-                    raise RobotGatewayError("运动结束但最终位置误差超限。")
-                return
+                now = time.monotonic()
+                if final_target_settle_deadline is None:
+                    final_target_settle_deadline = min(finish_deadline, now + FINAL_TARGET_SETTLE_S)
+                if self._target_reached(actual, target, kind=kind, position_tolerance=position_tolerance, orientation_tolerance=orientation_tolerance):
+                    final_target_stable_reads += 1
+                    if final_target_stable_reads >= FINAL_TARGET_STABLE_READS:
+                        return
+                else:
+                    final_target_stable_reads = 0
+                # The controller can mark its queue idle just before the final
+                # read-only pose packet reflects the settled servo position.
+                # Require several consecutive in-tolerance packets and allow a
+                # short convergence window before treating a residual as real.
+                if now >= final_target_settle_deadline:
+                    details = self._target_error_details(actual, target, kind=kind)
+                    raise RobotGatewayError("运动结束后最终位置误差超限（已等待状态稳定）：" + details)
+            else:
+                final_target_settle_deadline = None
+                final_target_stable_reads = 0
             time.sleep(0.05)
         raise RobotGatewayError("运动完成等待超时；不会自动继续下一阶段。")
 
@@ -338,12 +418,26 @@ class AuboRealGateway:
     def move_line_and_wait(self, target: Sequence[Any], limits: dict[str, Any], permit: MotionPermit, fingerprint: str, timeout_s: float = 180.0, should_stop: Callable[[], bool] | None = None) -> None:
         normalized = _six_finite(target, "tcp_target")
         self.move_line(normalized, limits, permit, fingerprint)
-        self._wait_until_target(normalized, kind="tcp", position_tolerance=float(limits["tcp_position_tolerance_m"]), orientation_tolerance=float(limits["tcp_orientation_tolerance_rad"]), timeout_s=timeout_s, should_stop=should_stop)
+        self._wait_until_target(
+            normalized,
+            kind="tcp",
+            position_tolerance=float(limits["tcp_position_tolerance_m"]),
+            orientation_tolerance=float(limits["tcp_orientation_tolerance_rad"]),
+            timeout_s=timeout_s,
+            should_stop=should_stop,
+        )
 
     def move_line_maintenance_and_wait(self, target: Sequence[Any], limits: dict[str, Any], permit: MotionPermit, fingerprint: str, timeout_s: float = 180.0, should_stop: Callable[[], bool] | None = None) -> None:
         normalized = _six_finite(target, "tcp_target")
         self.move_line_maintenance(normalized, limits, permit, fingerprint)
-        self._wait_until_target(normalized, kind="tcp", position_tolerance=float(limits["tcp_position_tolerance_m"]), orientation_tolerance=float(limits["tcp_orientation_tolerance_rad"]), timeout_s=timeout_s, should_stop=should_stop)
+        self._wait_until_target(
+            normalized,
+            kind="tcp",
+            position_tolerance=float(limits["tcp_position_tolerance_m"]),
+            orientation_tolerance=float(limits["tcp_orientation_tolerance_rad"]),
+            timeout_s=timeout_s,
+            should_stop=should_stop,
+        )
 
     def set_suction(self, enabled: bool, io_config: dict[str, Any], permit: MotionPermit, fingerprint: str, should_stop: Callable[[], bool] | None = None) -> bool:
         self.start_runtime_for_maintenance(permit, fingerprint)

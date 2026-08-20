@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import copy
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -67,6 +68,27 @@ REASON_LABELS = {
     "multiple_candidates_best_selected": "存在多个HSV轮廓，已按面积最大优先、置信度次优返回",
     "tiny_fragments_ignored": "已忽略低于碎片噪声下限的HSV小轮廓",
     "DETECTOR_INVALID": "颜色检测参数无效",
+}
+TEMP_TEST_HSV_RANGES = {
+    "红": [
+        {"lower": [0, 60, 50], "upper": [9, 255, 255]},
+        {"lower": [173, 60, 50], "upper": [179, 255, 255]},
+    ],
+    "橙": [
+        {"lower": [11, 70, 80], "upper": [21, 255, 255]},
+    ],
+    "黄": [
+        {"lower": [21, 50, 120], "upper": [29, 255, 255]},
+    ],
+    "绿": [
+        {"lower": [49, 35, 25], "upper": [81, 255, 220]},
+    ],
+    "蓝": [
+        {"lower": [91, 60, 15], "upper": [119, 255, 190]},
+    ],
+    "紫": [
+        {"lower": [130, 40, 25], "upper": [173, 255, 200]},
+    ],
 }
 
 
@@ -216,7 +238,7 @@ class OfflineVisionWindow(QMainWindow):
         splitter.addWidget(right)
         splitter.setSizes([210, 650, 700])
 
-        parameter_group = QGroupBox("当前预览参数（HSV从正式配置或候选JSON读取；不会写正式配置）")
+        parameter_group = QGroupBox("当前预览参数（HSV使用临时测试范围；不会写正式配置）")
         parameter_group.setMaximumHeight(225)
         parameter_layout = QHBoxLayout(parameter_group)
         form = QFormLayout()
@@ -286,8 +308,12 @@ class OfflineVisionWindow(QMainWindow):
 
     def _load_formal_detector(self) -> None:
         try:
-            self._set_detector_fields(load_scene_detector(REAL_CONFIG_DIR / "camera.json", self.scene))
-            self.status_label.setText(f"已只读载入正式 camera.json 中的 {self.scene} 参数。")
+            detector = load_scene_detector(REAL_CONFIG_DIR / "camera.json", self.scene)
+            detector["hsv_ranges"] = copy.deepcopy(TEMP_TEST_HSV_RANGES)
+            self._set_detector_fields(detector)
+            self.status_label.setText(
+                f"已载入正式 camera.json 中的 {self.scene} 其它参数；HSV使用临时测试范围。"
+            )
         except OfflineAnalysisError as exc:
             QMessageBox.critical(self, "载入失败", str(exc))
 

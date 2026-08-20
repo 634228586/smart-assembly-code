@@ -32,13 +32,21 @@ class FakeMotion:
     def moveLine(self, *args): self.line_calls.append(args); return 0
 
 
+class FakeMath:
+    def __init__(self) -> None:
+        self.pose_angle_distance = Mock(return_value=0.0)
+    def poseAngleDistance(self, actual, target):
+        return self.pose_angle_distance(actual, target)
+
+
 class GatewayForTest(AuboRealGateway):
     def __init__(self) -> None:
         super().__init__({"host": "unused", "port": 1}, {
             "required_state": {"robot_mode": "Running", "safety_mode": "Normal", "exec_id": -1, "runtime_machine_running": True},
             "active_tcp": {"offset": [0, 0, 0, 0, 0, 0], "tolerance": 1e-8},
         })
-        self.io = FakeIo(); self.motion = FakeMotion(); self.client = object(); self.robot_name = "robot"
+        self.io = FakeIo(); self.motion = FakeMotion(); self.math_api = FakeMath()
+        self.client = SimpleNamespace(getMath=lambda: self.math_api); self.robot_name = "robot"
     def _interfaces(self): return FakeRobot(self.io), object(), self.motion
     def start_runtime_for_maintenance(self, permit, fingerprint, timeout_s=5.0):
         permit.assert_valid(fingerprint)
@@ -223,7 +231,7 @@ class RobotGatewaySafetyTest(unittest.TestCase):
         with patch("app.robot_gateway.FINAL_TARGET_SETTLE_S", 0.0):
             with self.assertRaisesRegex(
                 RobotGatewayError,
-                "最终位置误差超限.*目标TCP=.*实际TCP=.*Δ位置",
+                "最终位置误差超限.*目标TCP=.*实际TCP=.*Δ位置.*AUBO真实姿态误差",
             ):
                 gateway._wait_until_target(
                     target, kind="tcp", position_tolerance=0.001,
@@ -231,10 +239,24 @@ class RobotGatewaySafetyTest(unittest.TestCase):
                 )
 
     def test_orientation_comparison_accepts_equivalent_angles_across_pi_seam(self) -> None:
+        gateway = GatewayForTest()
+        gateway.math_api.pose_angle_distance.return_value = 0.002
         target = (0.4, 0.1, 0.5, math.pi - 0.001, 0.0, 0.0)
         actual = (0.4, 0.1, 0.5, -math.pi + 0.001, 0.0, 0.0)
 
-        self.assertTrue(AuboRealGateway._target_reached(
+        self.assertTrue(gateway._target_reached(
+            actual, target, kind="tcp", position_tolerance=0.001,
+            orientation_tolerance=0.01,
+        ))
+        gateway.math_api.pose_angle_distance.assert_called_once_with(list(actual), list(target))
+
+    def test_tcp_orientation_uses_sdk_pose_angle_distance_tolerance(self) -> None:
+        gateway = GatewayForTest()
+        gateway.math_api.pose_angle_distance.return_value = 0.02
+        actual = (0.4, 0.1, 0.5, 0.0, 0.0, 0.0)
+        target = (0.4, 0.1, 0.5, 0.0, 0.0, 0.0)
+
+        self.assertFalse(gateway._target_reached(
             actual, target, kind="tcp", position_tolerance=0.001,
             orientation_tolerance=0.01,
         ))

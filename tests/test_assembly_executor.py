@@ -162,20 +162,24 @@ class AssemblyExecutorTest(unittest.TestCase):
     def test_uses_selected_colour_anchor_and_same_colour_delta_only(self) -> None:
         class DeltaVision(FakeVision):
             def locate_block(self, **kwargs):
-                return {"dx_tool_m": 0.9, "dy_tool_m": 0.8, "delta_x_tool_m": 0.002, "delta_y_tool_m": -0.003, "delta_r_rad": 0.01}
+                return {"dx_tool_m": 0.9, "dy_tool_m": 0.8, "r_image_rad": 0.3, "delta_x_tool_m": 0.002, "delta_y_tool_m": -0.003, "delta_r_rad": 0.01}
             def locate_trays(self, **kwargs):
-                return {"紫": {"dx_tool_m": 0.7, "dy_tool_m": 0.6, "delta_x_tool_m": -0.004, "delta_y_tool_m": 0.005, "delta_r_rad": 0.02}}
-        robot = FakeRobot(); executor = AssemblyExecutor(robot, DeltaVision(), session_id="delta", points={
+                return {"紫": {"dx_tool_m": 0.7, "dy_tool_m": 0.6, "r_image_rad": -0.2, "delta_x_tool_m": -0.004, "delta_y_tool_m": 0.005, "delta_r_rad": 0.02}}
+        robot = FakeRobot(); events = []; executor = AssemblyExecutor(robot, DeltaVision(), session_id="delta", points={
             "blocks_photo": [1] * 6, "trays_photo": [2] * 6, "task_card_photo": [3] * 6,
             "competition_standby": [4] * 6,
-        }, reference_anchors=colour_anchors())
+        }, reference_anchors=colour_anchors(), progress=events.append)
         executor.run_single(block_color="蓝", tray_color="紫")
         self.assertAlmostEqual(robot.lines[0][0], 0.338)
         self.assertAlmostEqual(robot.lines[0][1], 0.203)
         self.assertAlmostEqual(robot.transforms[0][0][0], 0.554)
         self.assertAlmostEqual(robot.transforms[0][0][1], 0.395)
         self.assertEqual(robot.transforms[0][1][:2], (0, 0))
-        self.assertAlmostEqual(robot.transforms[0][1][5], -0.01)
+        self.assertAlmostEqual(robot.transforms[0][1][5], -0.5)
+        rotation_log = next(event["message"] for event in events if event["phase"] == "tray_xy_rotation")
+        self.assertIn("方块绝对角度=+17.19°", rotation_log)
+        self.assertIn("托盘绝对角度=-11.46°", rotation_log)
+        self.assertIn("末端补偿角=-28.65°", rotation_log)
 
 
 if __name__ == "__main__":

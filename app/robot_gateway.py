@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Sequence
 
 
-FINAL_TARGET_SETTLE_S = 0.5
+FINAL_TARGET_SETTLE_S = 1.5
 FINAL_TARGET_STABLE_READS = 3
 
 
@@ -272,71 +272,35 @@ class AuboRealGateway:
             raise RobotGatewayError(f"moveLine失败：{result}")
         return result
 
-    @staticmethod
-    def _target_reached(actual: tuple[float, ...], target: tuple[float, ...], *, kind: str, position_tolerance: float, orientation_tolerance: float) -> bool:
+    def _target_reached(self, actual: tuple[float, ...], target: tuple[float, ...], *, kind: str, position_tolerance: float, orientation_tolerance: float) -> bool:
         if kind == "joint":
             return max(abs(a - b) for a, b in zip(actual, target)) <= position_tolerance
-        return (
-            AuboRealGateway._target_position_reached(
-                actual, target, kind=kind, position_tolerance=position_tolerance,
-            )
-            and AuboRealGateway._target_orientation_reached(
-                actual, target, kind=kind, orientation_tolerance=orientation_tolerance,
-            )
-        )
+        if self.client is None:
+            raise RobotGatewayError("机器人未连接，无法计算TCP姿态误差。")
+        position_ok = max(abs(actual[index] - target[index]) for index in range(3)) <= position_tolerance
+        orientation_error = float(self.client.getMath().poseAngleDistance(list(actual), list(target)))
+        if not math.isfinite(orientation_error):
+            raise RobotGatewayError("AUBO姿态距离计算返回非有限数值。")
+        return position_ok and orientation_error <= orientation_tolerance
 
-    @staticmethod
-    def _target_position_reached(
-        actual: tuple[float, ...],
-        target: tuple[float, ...],
-        *,
-        kind: str,
-        position_tolerance: float,
-    ) -> bool:
-        if kind == "joint":
-            return max(abs(a - b) for a, b in zip(actual, target)) <= position_tolerance
-        return max(abs(a - b) for a, b in zip(actual[:3], target[:3])) <= position_tolerance
-
-    @staticmethod
-    def _target_orientation_reached(
-        actual: tuple[float, ...],
-        target: tuple[float, ...],
-        *,
-        kind: str,
-        orientation_tolerance: float,
-    ) -> bool:
-        if kind == "joint":
-            return True
-        return max(
-            abs(AuboRealGateway._wrapped_angle_delta(a, b))
-            for a, b in zip(actual[3:], target[3:])
-        ) <= orientation_tolerance
-
-    @staticmethod
-    def _wrapped_angle_delta(actual: float, target: float) -> float:
-        """Return the shortest signed angular difference across the +/-pi seam."""
-
-        return (actual - target + math.pi) % (2.0 * math.pi) - math.pi
-
-    @staticmethod
-    def _target_error_details(actual: tuple[float, ...], target: tuple[float, ...], *, kind: str) -> str:
+    def _target_error_details(self, actual: tuple[float, ...], target: tuple[float, ...], *, kind: str) -> str:
         delta = tuple(actual_value - target_value for actual_value, target_value in zip(actual, target))
         if kind == "joint":
             return (
                 f"目标关节={list(target)}，实际关节={list(actual)}，"
                 f"Δ关节(rad)={list(delta)}，最大绝对误差={max(abs(value) for value in delta):.6f} rad"
             )
+        if self.client is None:
+            raise RobotGatewayError("机器人未连接，无法计算TCP姿态误差。")
         position_delta_mm = tuple(value * 1000.0 for value in delta[:3])
-        orientation_delta_deg = tuple(
-            math.degrees(AuboRealGateway._wrapped_angle_delta(actual_value, target_value))
-            for actual_value, target_value in zip(actual[3:], target[3:])
-        )
+        orientation_error = float(self.client.getMath().poseAngleDistance(list(actual), list(target)))
+        if not math.isfinite(orientation_error):
+            raise RobotGatewayError("AUBO姿态距离计算返回非有限数值。")
         return (
             f"目标TCP={list(target)}，实际TCP={list(actual)}，"
             f"Δ位置(mm)={list(position_delta_mm)}，"
-            f"Δ姿态(deg)={list(orientation_delta_deg)}，"
             f"位置最大绝对误差={max(abs(value) for value in position_delta_mm):.3f} mm，"
-            f"姿态最大绝对误差={max(abs(value) for value in orientation_delta_deg):.3f}°"
+            f"AUBO真实姿态误差={math.degrees(orientation_error):.3f}°"
         )
 
     def _wait_until_target(self, target: tuple[float, ...], *, kind: str, position_tolerance: float, orientation_tolerance: float, timeout_s: float, should_stop: Callable[[], bool] | None = None) -> None:

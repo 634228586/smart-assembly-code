@@ -172,8 +172,8 @@
     "linear_velocity_m_s": 0.1,
     "blend_radius_m": 0.0,
     "joint_tolerance_rad": 0.001745329252,
-    "tcp_position_tolerance_m": 0.001,
-    "tcp_orientation_tolerance_rad": 0.00872664626
+    "tcp_position_tolerance_m": 0.01,
+    "tcp_orientation_tolerance_rad": 0.05235987756
   },
   "direct_routes": {
     "standby_to_task_card": false,

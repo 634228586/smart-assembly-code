@@ -194,10 +194,9 @@ class AssemblyExecutor:
             f"ΔY={float(tray['delta_y_tool_m']) * 1000.0:+.3f} mm，"
             f"ΔR={math.degrees(float(tray['delta_r_rad'])):+.2f}°",
         )
-        # The image-plane angle increases opposite to the tool-Z rotation used
-        # by poseTrans on this eye-in-hand installation.  Reverse the relative
-        # tray/block image angle before commanding the wrist.
-        delta_rz = normalize_square_angle(float(block["delta_r_rad"]) - float(tray["delta_r_rad"]))
+        block_absolute_angle = float(block["r_image_rad"])
+        tray_absolute_angle = float(tray["r_image_rad"])
+        delta_rz = normalize_square_angle(tray_absolute_angle - block_absolute_angle)
         tray_anchor = self._reference_anchor("trays", tray_color)
         tray_reference = self._reference_high_pose(tray_anchor, tray_photo)
         tray_xy_target = self._apply_calibrated_xy(tray_reference, tray["delta_x_tool_m"], tray["delta_y_tool_m"])
@@ -207,6 +206,8 @@ class AssemblyExecutor:
             "tray_xy_rotation",
             f"移动到托盘高位目标并完成方向对齐：基准XY=({tray_reference[0]:.6f}, {tray_reference[1]:.6f}) m，"
             f"最终XY=({tray_target[0]:.6f}, {tray_target[1]:.6f}) m，"
+            f"方块绝对角度={math.degrees(block_absolute_angle):+.2f}°，"
+            f"托盘绝对角度={math.degrees(tray_absolute_angle):+.2f}°，"
             f"末端补偿角={math.degrees(delta_rz):+.2f}°",
         )
         self.robot.move_line(tray_target)

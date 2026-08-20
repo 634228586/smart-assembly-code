@@ -22,9 +22,8 @@ class VisionTargetNotFoundError(VisionClientError):
 
 
 class RealVisionClient:
-    def __init__(self, endpoint: Endpoint, *, camera_serial: str, active_tcp: str, calibration_ids: dict[str, str] | None = None, timeout_s: float = 5.0, fresh_frame_max_age_ms: int = 5000, visual_result_callback: Callable[[dict[str, Any]], None] | None = None) -> None:
+    def __init__(self, endpoint: Endpoint, *, active_tcp: str, calibration_ids: dict[str, str] | None = None, timeout_s: float = 5.0, fresh_frame_max_age_ms: int = 5000, visual_result_callback: Callable[[dict[str, Any]], None] | None = None) -> None:
         self.endpoint = endpoint
-        self.camera_serial = camera_serial
         self.active_tcp = active_tcp
         self.calibration_ids = calibration_ids or {}
         self.timeout_s = timeout_s
@@ -67,24 +66,23 @@ class RealVisionClient:
             validate_service_identity(payload, expected_service=self.endpoint.expected_service)
         except ProtocolError as exc:
             raise VisionClientError(str(exc)) from exc
-        if payload.get("camera_serial") != self.camera_serial or payload.get("source") != "mvs" or payload.get("mounting") != "eye_in_hand":
-            raise VisionClientError("视觉服务相机身份、来源或安装方式不匹配。")
+        if payload.get("source") != "mvs" or payload.get("mounting") != "eye_in_hand":
+            raise VisionClientError("视觉服务来源或安装方式不匹配。")
         return payload
 
     def capture_task_card(self, *, request_id: str, session_id: str, session_dir: Path) -> CapturedFrame:
         """要求统一 MVS 服务切换 task_card profile 并保存本次新图。"""
 
-        request = CaptureRequest(request_id, session_dir.resolve(), "task_card", self.camera_serial)
+        request = CaptureRequest(request_id, session_dir.resolve(), "task_card")
         request.validate()
         started_at = datetime.now(timezone.utc)
         result = self._exchange({
             "type": "capture_frame", "protocol_version": 1, "request_id": request_id,
             "session_id": session_id, "scene": "task_card", "profile": "task_card",
-            "camera_serial": self.camera_serial,
         })
         required = {
             "service", "protocol_version", "type", "success", "request_id", "session_id",
-            "scene", "profile", "data_origin", "camera_serial", "captured_at", "image_id",
+            "scene", "profile", "data_origin", "captured_at", "image_id",
             "image_path", "parameters_applied",
         } | CAPTURE_EVIDENCE_FIELDS
         if not isinstance(result, dict) or set(result) != required:
@@ -93,7 +91,7 @@ class RealVisionClient:
             "service": self.endpoint.expected_service, "protocol_version": 1,
             "type": "capture_result", "success": True, "request_id": request_id,
             "session_id": session_id, "scene": "task_card", "profile": "task_card",
-            "data_origin": "camera_vision", "camera_serial": self.camera_serial,
+            "data_origin": "camera_vision",
             "parameters_applied": True,
         }
         if any(result.get(key) != value for key, value in expected.items()):
@@ -112,7 +110,7 @@ class RealVisionClient:
         if age_ms > self.fresh_frame_max_age_ms or age_ms < -5000:
             raise VisionClientError("任务卡帧不满足新鲜度要求。")
         frame = CapturedFrame(
-            request_id=request_id, camera_serial=self.camera_serial, profile="task_card",
+            request_id=request_id, profile="task_card",
             image_path=Path(str(result["image_path"])).resolve(), captured_at=str(result["captured_at"]),
             parameters_applied=True,
         )
@@ -124,20 +122,20 @@ class RealVisionClient:
         result = self._exchange({
             "type": "capture_and_locate", "protocol_version": 1, "request_id": request_id,
             "session_id": session_id, "scene": "blocks", "target_color": color,
-            "photo_point": photo_point, "camera_serial": self.camera_serial,
+            "photo_point": photo_point,
             "calibration_id": self.calibration_ids["blocks"], "active_tcp": self.active_tcp,
         })
-        return validate_workspace_result(result, scene="blocks", request_id=request_id, camera_serial=self.camera_serial, calibration_id=self.calibration_ids["blocks"], active_tcp=self.active_tcp, photo_point=photo_point, request_started_at=started_at, fresh_frame_max_age_ms=self.fresh_frame_max_age_ms)["detection"]
+        return validate_workspace_result(result, scene="blocks", request_id=request_id, calibration_id=self.calibration_ids["blocks"], active_tcp=self.active_tcp, photo_point=photo_point, request_started_at=started_at, fresh_frame_max_age_ms=self.fresh_frame_max_age_ms)["detection"]
 
     def locate_trays(self, *, request_id: str, photo_point: str, session_id: str) -> dict[str, dict[str, Any]]:
         started_at = datetime.now(timezone.utc)
         result = self._exchange({
             "type": "capture_and_locate", "protocol_version": 1, "request_id": request_id,
             "session_id": session_id, "scene": "trays", "photo_point": photo_point,
-            "camera_serial": self.camera_serial, "calibration_id": self.calibration_ids["trays"],
+            "calibration_id": self.calibration_ids["trays"],
             "active_tcp": self.active_tcp,
         })
-        validated = validate_workspace_result(result, scene="trays", request_id=request_id, camera_serial=self.camera_serial, calibration_id=self.calibration_ids["trays"], active_tcp=self.active_tcp, photo_point=photo_point, request_started_at=started_at, fresh_frame_max_age_ms=self.fresh_frame_max_age_ms)
+        validated = validate_workspace_result(result, scene="trays", request_id=request_id, calibration_id=self.calibration_ids["trays"], active_tcp=self.active_tcp, photo_point=photo_point, request_started_at=started_at, fresh_frame_max_age_ms=self.fresh_frame_max_age_ms)
         return {item["color"]: item for item in validated["detections"]}
 
     def calibration_begin(self, *, request_id: str, session_id: str, scene: str, target_color: str, photo_point: str, robot_serial: str, step_x_mm: float, step_y_mm: float) -> dict[str, Any]:
@@ -145,23 +143,23 @@ class RealVisionClient:
             "type": "calibration_begin", "protocol_version": 1,
             "request_id": request_id, "session_id": session_id,
             "scene": scene, "profile": scene, "target_color": target_color,
-            "photo_point": photo_point, "camera_serial": self.camera_serial,
+            "photo_point": photo_point,
             "robot_serial": robot_serial, "active_tcp": self.active_tcp,
             "step_x_mm": float(step_x_mm), "step_y_mm": float(step_y_mm),
         })
         self._assert_calibration_identity(result, "calibration_begin_result", request_id, session_id)
-        if result.get("scene") != scene or result.get("camera_serial") != self.camera_serial:
-            raise VisionClientError("九点开始响应的场景或相机身份不匹配。")
+        if result.get("scene") != scene:
+            raise VisionClientError("九点开始响应的场景不匹配。")
         return result
 
     def validate_detector(self, *, request_id: str, session_id: str, scene: str) -> dict[str, Any]:
         result = self._exchange({
             "type": "detector_validate", "protocol_version": 1,
             "request_id": request_id, "session_id": session_id,
-            "scene": scene, "camera_serial": self.camera_serial,
+            "scene": scene,
         })
         self._assert_calibration_identity(result, "detector_validate_result", request_id, session_id)
-        if result.get("scene") != scene or result.get("camera_serial") != self.camera_serial:
+        if result.get("scene") != scene:
             raise VisionClientError("颜色参数验证响应身份不匹配。")
         detections = result.get("detections")
         if not isinstance(detections, list) or {item.get("color") for item in detections if isinstance(item, dict)} != {"红", "橙", "黄", "绿", "蓝", "紫"}:
@@ -172,10 +170,10 @@ class RealVisionClient:
         result = self._exchange({
             "type": "detector_estimate_area", "protocol_version": 1,
             "request_id": request_id, "session_id": session_id,
-            "scene": scene, "camera_serial": self.camera_serial,
+            "scene": scene,
         })
         self._assert_calibration_identity(result, "detector_estimate_area_result", request_id, session_id)
-        if result.get("scene") != scene or result.get("camera_serial") != self.camera_serial:
+        if result.get("scene") != scene:
             raise VisionClientError("面积自动估算响应身份不匹配。")
         areas = result.get("areas_px")
         if not isinstance(areas, dict) or set(areas) != {"红", "橙", "黄", "绿", "蓝", "紫"}:
@@ -192,13 +190,13 @@ class RealVisionClient:
         result = self._exchange({
             "type": "manual_scene_capture", "protocol_version": 1,
             "request_id": request_id, "session_id": session_id,
-            "scene": scene, "camera_serial": self.camera_serial,
+            "scene": scene,
         })
         self._assert_calibration_identity(result, "manual_scene_capture_result", request_id, session_id)
         if scene not in {"blocks", "trays"} or result.get("scene") != scene:
             raise VisionClientError("手动取图响应场景不匹配。")
-        if result.get("camera_serial") != self.camera_serial or result.get("parameters_applied") is not True:
-            raise VisionClientError("手动取图响应的相机身份或采集参数状态不匹配。")
+        if result.get("parameters_applied") is not True:
+            raise VisionClientError("手动取图响应的采集参数状态不匹配。")
         image_path = result.get("image_path")
         if not isinstance(image_path, str) or not Path(image_path).resolve().is_file():
             raise VisionClientError("手动取图响应缺少有效的原图路径。")
@@ -212,11 +210,11 @@ class RealVisionClient:
         result = self._exchange({
             "type": "manual_scene_recognize", "protocol_version": 1,
             "request_id": request_id, "session_id": session_id, "scene": scene,
-            "camera_serial": self.camera_serial, "active_tcp": self.active_tcp,
+            "active_tcp": self.active_tcp,
         })
         required = {
             "type": "manual_scene_recognize_result", "request_id": request_id,
-            "session_id": session_id, "scene": scene, "camera_serial": self.camera_serial,
+            "session_id": session_id, "scene": scene,
             "active_tcp": self.active_tcp, "success": True,
         }
         if any(result.get(key) != value for key, value in required.items()):
@@ -240,10 +238,10 @@ class RealVisionClient:
         result = self._exchange({
             "type": "profile_validate", "protocol_version": 1,
             "request_id": request_id, "session_id": session_id,
-            "profile": profile, "camera_serial": self.camera_serial,
+            "profile": profile,
         })
         self._assert_calibration_identity(result, "profile_validate_result", request_id, session_id)
-        if result.get("profile") != profile or result.get("camera_serial") != self.camera_serial or result.get("parameters_applied") is not True:
+        if result.get("profile") != profile or result.get("parameters_applied") is not True:
             raise VisionClientError("采集参数写入测试响应身份或状态不匹配。")
         if not isinstance(result.get("configured_parameters"), dict) or not isinstance(result.get("profile_sha256"), str):
             raise VisionClientError("采集参数写入测试响应缺少配置值或配置哈希。")
@@ -253,7 +251,7 @@ class RealVisionClient:
         result = self._exchange({
             "type": "calibration_capture_point", "protocol_version": 1,
             "request_id": request_id, "session_id": session_id,
-            "camera_serial": self.camera_serial, "index": int(index),
+            "index": int(index),
             "actual_tcp_pose": [float(value) for value in actual_tcp_pose],
             "tool_x_mm": float(tool_x_mm), "tool_y_mm": float(tool_y_mm),
         })
@@ -265,7 +263,7 @@ class RealVisionClient:
     def calibration_finish(self, *, request_id: str, session_id: str) -> dict[str, Any]:
         result = self._exchange({
             "type": "calibration_finish", "protocol_version": 1,
-            "request_id": request_id, "session_id": session_id, "camera_serial": self.camera_serial,
+            "request_id": request_id, "session_id": session_id,
         })
         self._assert_calibration_identity(result, "calibration_finish_result", request_id, session_id)
         if result.get("approved") is not False:
@@ -276,7 +274,7 @@ class RealVisionClient:
         result = self._exchange({
             "type": "calibration_validate_capture", "protocol_version": 1,
             "request_id": request_id, "session_id": session_id,
-            "scene": scene, "validation_kind": validation_kind, "camera_serial": self.camera_serial,
+            "scene": scene, "validation_kind": validation_kind,
         })
         self._assert_calibration_identity(result, "calibration_validate_result", request_id, session_id)
         if result.get("scene") != scene or result.get("validation_kind") != validation_kind:
@@ -286,7 +284,7 @@ class RealVisionClient:
     def calibration_abort(self, *, request_id: str, session_id: str) -> dict[str, Any]:
         result = self._exchange({
             "type": "calibration_abort", "protocol_version": 1,
-            "request_id": request_id, "session_id": session_id, "camera_serial": self.camera_serial,
+            "request_id": request_id, "session_id": session_id,
         })
         self._assert_calibration_identity(result, "calibration_abort_result", request_id, session_id)
         return result

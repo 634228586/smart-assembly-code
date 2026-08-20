@@ -26,7 +26,7 @@ def _check(category: str, item: str, ok: bool, actual: Any, expected: str, actio
     return Check(category, item, str(actual), expected, "PASS" if ok else ("FAIL" if critical else "WARN"), action, critical)
 
 
-def _calibration_check(scene: str, camera_serial: Any, robot_serial: Any, tcp_name: Any, scene_settings: dict[str, Any], profile: dict[str, Any]) -> Check:
+def _calibration_check(scene: str, robot_serial: Any, tcp_name: Any, scene_settings: dict[str, Any], profile: dict[str, Any]) -> Check:
     directory = REAL_CALIBRATION_DIR / scene
     files = sorted(directory.glob("*.json"))
     if len(files) != 1:
@@ -39,7 +39,6 @@ def _calibration_check(scene: str, camera_serial: Any, robot_serial: Any, tcp_na
             "scene": scene,
             "data_origin": "camera_vision",
             "usable_for_real_robot": True,
-            "camera_serial": camera_serial,
             "robot_serial": robot_serial,
             "active_tcp": tcp_name,
             "photo_point": f"{scene}_photo",
@@ -149,10 +148,9 @@ def run_static_preflight() -> list[Check]:
     ))
 
     robot_serial = robot["identity"].get("binding_id")
-    camera_serial = camera.get("serial_number")
     tcp_name = robot["active_tcp"].get("name")
-    checks.append(_calibration_check("blocks", camera_serial, robot_serial, tcp_name, motion.get("nine_point", {}).get("blocks", {}), camera.get("profiles", {}).get("blocks", {})))
-    checks.append(_calibration_check("trays", camera_serial, robot_serial, tcp_name, motion.get("nine_point", {}).get("trays", {}), camera.get("profiles", {}).get("trays", {})))
+    checks.append(_calibration_check("blocks", robot_serial, tcp_name, motion.get("nine_point", {}).get("blocks", {}), camera.get("profiles", {}).get("blocks", {})))
+    checks.append(_calibration_check("trays", robot_serial, tcp_name, motion.get("nine_point", {}).get("trays", {}), camera.get("profiles", {}).get("trays", {})))
 
     checks.append(_check("完整性", "包路径独立", PACKAGE_ROOT.name == "装配赛正式代码", PACKAGE_ROOT, "装配赛正式代码", "从正式目录启动。", critical=False))
     return checks

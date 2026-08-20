@@ -39,12 +39,10 @@ class CurrentMvsParametersWorker(QObject):
         camera: MvsCamera | None = None
         try:
             configs = load_all()
-            serial = str(configs["camera"]["serial_number"])
             camera = MvsCamera()
-            device = camera.open_exact_serial(serial)
+            device = camera.open_first_available()
             parameters = camera.read_current_parameters()
             self.finished.emit({
-                "serial_number": device.serial,
                 "model": device.model,
                 "transport": device.transport,
                 "parameters": parameters,
@@ -141,7 +139,7 @@ class CalibrationWorker(QObject):
             snapshot = gateway.connect_readonly()
             self.progress.emit({"phase": "identity", "message": f"真实机器人身份通过：{snapshot.robot_name}"})
             vision = RealVisionClient(
-                configured["vision_service"], camera_serial=configs["camera"]["serial_number"],
+                configured["vision_service"],
                 active_tcp=configs["robot"]["active_tcp"]["name"], fresh_frame_max_age_ms=int(configs["camera"]["fresh_frame_max_age_ms"]),
                 visual_result_callback=lambda payload: self.progress.emit({**payload, "phase": "visual_result"}),
             ); self._vision = vision
@@ -242,7 +240,7 @@ class CalibrationValidationWorker(QObject):
             if max(abs(actual - target) for actual, target in zip(snapshot.joint_positions, expected)) > tolerance:
                 raise RuntimeError(f"方向验证时机器人不在 {self.scene}中心拍照点；禁止用错误姿态拍照。")
             vision = RealVisionClient(
-                configured["vision_service"], camera_serial=configs["camera"]["serial_number"],
+                configured["vision_service"],
                 active_tcp=configs["robot"]["active_tcp"]["name"],
                 fresh_frame_max_age_ms=int(configs["camera"]["fresh_frame_max_age_ms"]),
                 visual_result_callback=self.visual.emit,
@@ -274,7 +272,7 @@ class DetectorValidationWorker(QObject):
             configs = load_all(); configured = endpoints(configs["endpoints"])
             session_id = f"detector-{self.scene}-{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}"
             vision = RealVisionClient(
-                configured["vision_service"], camera_serial=configs["camera"]["serial_number"],
+                configured["vision_service"],
                 active_tcp=configs["robot"]["active_tcp"]["name"],
                 fresh_frame_max_age_ms=int(configs["camera"]["fresh_frame_max_age_ms"]),
                 visual_result_callback=self.visual.emit,
@@ -299,7 +297,7 @@ class DetectorAreaEstimateWorker(QObject):
             configs = load_all(); configured = endpoints(configs["endpoints"])
             session_id = f"area-{self.scene}-{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}"
             vision = RealVisionClient(
-                configured["vision_service"], camera_serial=configs["camera"]["serial_number"],
+                configured["vision_service"],
                 active_tcp=configs["robot"]["active_tcp"]["name"],
                 fresh_frame_max_age_ms=int(configs["camera"]["fresh_frame_max_age_ms"]),
             )
@@ -324,7 +322,7 @@ class ManualSceneCaptureWorker(QObject):
             configs = load_all(); configured = endpoints(configs["endpoints"])
             session_id = f"manual-{self.scene}-{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}"
             vision = RealVisionClient(
-                configured["vision_service"], camera_serial=configs["camera"]["serial_number"],
+                configured["vision_service"],
                 active_tcp=configs["robot"]["active_tcp"]["name"],
                 fresh_frame_max_age_ms=int(configs["camera"]["fresh_frame_max_age_ms"]),
             )
@@ -353,7 +351,7 @@ class ManualSceneRecognitionWorker(QObject):
             configs = load_all(); configured = endpoints(configs["endpoints"])
             session_id = f"manual-recognize-{self.scene}-{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}"
             vision = RealVisionClient(
-                configured["vision_service"], camera_serial=configs["camera"]["serial_number"],
+                configured["vision_service"],
                 active_tcp=configs["robot"]["active_tcp"]["name"],
                 fresh_frame_max_age_ms=int(configs["camera"]["fresh_frame_max_age_ms"]),
             )
@@ -377,7 +375,7 @@ class ProfileValidationWorker(QObject):
             configs = load_all(); configured = endpoints(configs["endpoints"])
             session_id = f"profiles-{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}"
             vision = RealVisionClient(
-                configured["vision_service"], camera_serial=configs["camera"]["serial_number"],
+                configured["vision_service"],
                 active_tcp=configs["robot"]["active_tcp"]["name"],
                 fresh_frame_max_age_ms=int(configs["camera"]["fresh_frame_max_age_ms"]),
             )

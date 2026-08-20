@@ -33,7 +33,6 @@ SAFE_ID = re.compile(r"[A-Za-z0-9._:-]{1,128}\Z")
 
 def _camera_start_missing(camera_config: dict[str, Any]) -> list[str]:
     required: dict[str, Any] = {
-        "serial_number": camera_config.get("serial_number"),
         "sdk_family": camera_config.get("sdk_family"),
         "mounting": camera_config.get("mounting"),
         "fresh_frame_max_age_ms": camera_config.get("fresh_frame_max_age_ms"),
@@ -89,15 +88,11 @@ class RealMvsVisionService:
         self.endpoint = endpoint
         self.calibration_root = calibration_root.resolve()
         self.session_root = session_root.resolve()
-        self.configured_serial = str(camera_config["serial_number"])
-        self.serial = self.configured_serial
         self.profiles = camera_config["profiles"]
         self._lock = threading.Lock()
         self._calibration: VisionCalibrationSession | None = None
         self._candidates: dict[tuple[str, str], Path] = {}
-        self.device = self.camera.open_exact_serial(self.serial)
-        # 以实际打开的唯一设备为本次服务身份；允许配置文件暂留旧序列号。
-        self.serial = self.device.serial
+        self.device = self.camera.open_first_available()
 
     @classmethod
     def from_real_config(cls) -> "RealMvsVisionService":
@@ -177,7 +172,7 @@ class RealMvsVisionService:
             raise VisionServiceError("HEALTH_IDENTITY_MISMATCH", "健康检查的服务身份字段不匹配。")
         return {
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
-            "status": "ready", "camera_serial": self.serial,
+            "status": "ready",
             "camera_model": self.device.model, "camera_transport": self.device.transport,
             "source": "mvs", "mounting": "eye_in_hand",
             "calibration_session": self._calibration.session_id if self._calibration is not None else None,
@@ -186,13 +181,12 @@ class RealMvsVisionService:
     def _calibration_begin(self, request: dict[str, Any]) -> dict[str, Any]:
         required = {
             "type", "protocol_version", "request_id", "session_id", "scene", "profile",
-            "target_color", "photo_point", "camera_serial", "robot_serial", "active_tcp",
+            "target_color", "photo_point", "robot_serial", "active_tcp",
             "step_x_mm", "step_y_mm",
         }
         if set(request) != required:
             raise VisionServiceError("CALIBRATION_BEGIN_INVALID", "九点开始请求字段不完整或包含未知字段。")
         request_id, session_id = self._ids(request)
-        self._assert_serial(request)
         scene = request.get("scene")
         if scene not in {"blocks", "trays"} or request.get("profile") != scene or request.get("photo_point") != f"{scene}_photo":
             raise VisionServiceError("CALIBRATION_SCENE_INVALID", "九点场景、profile或拍照点不匹配。")
@@ -229,7 +223,7 @@ class RealMvsVisionService:
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "type": "calibration_begin_result", "success": True,
             "request_id": request_id, "session_id": session_id, "scene": scene,
-            "camera_serial": self.serial, "captured_at": captured_at,
+            "captured_at": captured_at,
             "replaced_session_id": replaced_session_id,
             "frame_number": capture.frame_number, "image_width": width, "image_height": height,
             "image_path": str(image_path), "raw_image_path": str(raw_path),
@@ -238,10 +232,10 @@ class RealMvsVisionService:
         }
 
     def _detector_validate(self, request: dict[str, Any]) -> dict[str, Any]:
-        required = {"type", "protocol_version", "request_id", "session_id", "scene", "camera_serial"}
+        required = {"type", "protocol_version", "request_id", "session_id", "scene"}
         if set(request) != required:
             raise VisionServiceError("DETECTOR_VALIDATE_INVALID", "颜色参数验证请求字段无效。")
-        request_id, session_id = self._ids(request); self._assert_serial(request)
+        request_id, session_id = self._ids(request)
         scene = request.get("scene")
         if scene not in {"blocks", "trays"}:
             raise VisionServiceError("DETECTOR_VALIDATE_INVALID", "颜色参数验证场景无效。")
@@ -266,7 +260,7 @@ class RealMvsVisionService:
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "type": "detector_validate_result", "success": True,
             "request_id": request_id, "session_id": session_id, "scene": scene,
-            "camera_serial": self.serial, "captured_at": captured_at,
+            "captured_at": captured_at,
             "frame_number": capture.frame_number, "image_width": int(capture.image_bgr.shape[1]),
             "image_height": int(capture.image_bgr.shape[0]), "image_path": str(raw_path),
             "annotated_image_path": str(path), "detection_summary": summary,
@@ -274,10 +268,10 @@ class RealMvsVisionService:
         }
 
     def _detector_estimate_area(self, request: dict[str, Any]) -> dict[str, Any]:
-        required = {"type", "protocol_version", "request_id", "session_id", "scene", "camera_serial"}
+        required = {"type", "protocol_version", "request_id", "session_id", "scene"}
         if set(request) != required:
             raise VisionServiceError("DETECTOR_ESTIMATE_INVALID", "面积自动估算请求字段无效。")
-        request_id, session_id = self._ids(request); self._assert_serial(request)
+        request_id, session_id = self._ids(request)
         scene = request.get("scene")
         if scene not in {"blocks", "trays"}:
             raise VisionServiceError("DETECTOR_ESTIMATE_INVALID", "面积自动估算场景无效。")
@@ -291,7 +285,7 @@ class RealMvsVisionService:
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "type": "detector_estimate_area_result", "success": True,
             "request_id": request_id, "session_id": session_id, "scene": scene,
-            "camera_serial": self.serial, "captured_at": captured_at,
+            "captured_at": captured_at,
             "frame_number": capture.frame_number, "image_width": int(capture.image_bgr.shape[1]),
             "image_height": int(capture.image_bgr.shape[0]), "image_path": str(path), **estimate,
         }
@@ -299,10 +293,10 @@ class RealMvsVisionService:
     def _manual_scene_capture(self, request: dict[str, Any]) -> dict[str, Any]:
         """Capture one raw blocks/trays frame for offline detector tuning."""
 
-        required = {"type", "protocol_version", "request_id", "session_id", "scene", "camera_serial"}
+        required = {"type", "protocol_version", "request_id", "session_id", "scene"}
         if set(request) != required:
             raise VisionServiceError("MANUAL_CAPTURE_INVALID", "手动取图请求字段无效。")
-        request_id, session_id = self._ids(request); self._assert_serial(request)
+        request_id, session_id = self._ids(request)
         scene = request.get("scene")
         if scene not in {"blocks", "trays"}:
             raise VisionServiceError("MANUAL_CAPTURE_INVALID", "手动取图场景必须是 blocks 或 trays。")
@@ -315,7 +309,7 @@ class RealMvsVisionService:
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "type": "manual_scene_capture_result", "success": True,
             "request_id": request_id, "session_id": session_id, "scene": scene,
-            "camera_serial": self.serial, "captured_at": captured_at,
+            "captured_at": captured_at,
             "frame_number": capture.frame_number, "image_width": int(capture.image_bgr.shape[1]),
             "image_height": int(capture.image_bgr.shape[0]), "image_path": str(image_path),
             "parameters_applied": True, "configured_parameters": capture.configured_parameters,
@@ -326,11 +320,11 @@ class RealMvsVisionService:
 
         required = {
             "type", "protocol_version", "request_id", "session_id", "scene",
-            "camera_serial", "active_tcp",
+            "active_tcp",
         }
         if set(request) != required:
             raise VisionServiceError("MANUAL_RECOGNIZE_INVALID", "手动拍照识别请求字段无效。")
-        request_id, session_id = self._ids(request); self._assert_serial(request)
+        request_id, session_id = self._ids(request)
         scene = request.get("scene")
         if scene not in {"blocks", "trays"}:
             raise VisionServiceError("MANUAL_RECOGNIZE_INVALID", "手动识别场景必须是 blocks 或 trays。")
@@ -359,7 +353,7 @@ class RealMvsVisionService:
             if not isinstance(calibration_id, str) or not calibration_id:
                 raise WorkspaceRecognitionError("CALIBRATION_INVALID", "标定文件缺少 calibration_id。")
             calibration = load_approved_calibration(
-                calibration_path, scene=scene, camera_serial=self.serial,
+                calibration_path, scene=scene,
                 active_tcp=active_tcp, calibration_id=calibration_id,
             )
             calibration_message = "已使用当前批准九点标定计算工具坐标偏移。"
@@ -397,7 +391,7 @@ class RealMvsVisionService:
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "type": "manual_scene_recognize_result", "success": True,
             "request_id": request_id, "session_id": session_id, "scene": scene,
-            "camera_serial": self.serial, "active_tcp": active_tcp,
+            "active_tcp": active_tcp,
             "captured_at": captured_at, "frame_number": capture.frame_number,
             "image_width": int(capture.image_bgr.shape[1]), "image_height": int(capture.image_bgr.shape[0]),
             "image_path": str(raw_path), "annotated_image_path": str(annotated_path),
@@ -411,10 +405,10 @@ class RealMvsVisionService:
         }
 
     def _profile_validate(self, request: dict[str, Any]) -> dict[str, Any]:
-        required = {"type", "protocol_version", "request_id", "session_id", "profile", "camera_serial"}
+        required = {"type", "protocol_version", "request_id", "session_id", "profile"}
         if set(request) != required:
             raise VisionServiceError("PROFILE_VALIDATE_INVALID", "采集参数写入测试请求字段无效。")
-        request_id, session_id = self._ids(request); self._assert_serial(request)
+        request_id, session_id = self._ids(request)
         profile_name = request.get("profile")
         if profile_name not in {"task_card", "blocks", "trays"}:
             raise VisionServiceError("PROFILE_VALIDATE_INVALID", "采集参数写入测试 profile无效。")
@@ -429,7 +423,7 @@ class RealMvsVisionService:
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "type": "profile_validate_result", "success": True,
             "request_id": request_id, "session_id": session_id, "profile": profile_name,
-            "camera_serial": self.serial, "captured_at": captured_at,
+            "captured_at": captured_at,
             "frame_number": capture.frame_number, "image_width": int(capture.image_bgr.shape[1]),
             "image_height": int(capture.image_bgr.shape[0]), "image_path": str(image_path),
             "parameters_applied": True, "configured_parameters": capture.configured_parameters,
@@ -438,12 +432,12 @@ class RealMvsVisionService:
 
     def _calibration_capture_point(self, request: dict[str, Any]) -> dict[str, Any]:
         required = {
-            "type", "protocol_version", "request_id", "session_id", "camera_serial",
+            "type", "protocol_version", "request_id", "session_id",
             "index", "actual_tcp_pose", "tool_x_mm", "tool_y_mm",
         }
         if set(request) != required:
             raise VisionServiceError("CALIBRATION_POINT_INVALID", "九点采集请求字段不完整或包含未知字段。")
-        request_id, session_id = self._ids(request); self._assert_serial(request)
+        request_id, session_id = self._ids(request)
         session = self._require_calibration(session_id)
         index = request.get("index")
         if isinstance(index, bool) or not isinstance(index, int) or index != len(session.samples) + 1 or not 1 <= index <= 9:
@@ -489,14 +483,14 @@ class RealMvsVisionService:
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "type": "calibration_point_result", "success": True,
             "request_id": request_id, "session_id": session_id, "scene": session.scene,
-            "camera_serial": self.serial, "sample": sample, "accepted_count": len(session.samples),
+            "sample": sample, "accepted_count": len(session.samples),
         }
 
     def _calibration_finish(self, request: dict[str, Any]) -> dict[str, Any]:
-        required = {"type", "protocol_version", "request_id", "session_id", "camera_serial"}
+        required = {"type", "protocol_version", "request_id", "session_id"}
         if set(request) != required:
             raise VisionServiceError("CALIBRATION_FINISH_INVALID", "九点完成请求字段无效。")
-        request_id, session_id = self._ids(request); self._assert_serial(request)
+        request_id, session_id = self._ids(request)
         session = self._require_calibration(session_id)
         if len(session.samples) != 9:
             raise VisionServiceError("CALIBRATION_INCOMPLETE", "九点样本未完整达到9个。")
@@ -534,7 +528,7 @@ class RealMvsVisionService:
                 details=self._diagnostic_details(session.scene, reference_raw, reference_annotated, reference_summary),
             )
         candidate = build_candidate(
-            scene=session.scene, camera_serial=self.serial, robot_serial=session.robot_serial,
+            scene=session.scene, robot_serial=session.robot_serial,
             active_tcp=session.active_tcp, photo_point=session.photo_point,
             image_width=session.image_width, image_height=session.image_height,
             target_color=session.target_color, step_x_mm=session.step_x_mm, step_y_mm=session.step_y_mm,
@@ -552,7 +546,7 @@ class RealMvsVisionService:
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "type": "calibration_finish_result", "success": True,
             "request_id": request_id, "session_id": session_id, "scene": session.scene,
-            "camera_serial": self.serial, "candidate_path": str(path),
+            "candidate_path": str(path),
             "calibration_id": candidate["calibration_id"],
             "rms_error_mm": fit.rms_error_mm, "max_error_mm": fit.max_error_mm,
             "reference_detections": references,
@@ -561,22 +555,22 @@ class RealMvsVisionService:
         }
 
     def _calibration_abort(self, request: dict[str, Any]) -> dict[str, Any]:
-        required = {"type", "protocol_version", "request_id", "session_id", "camera_serial"}
+        required = {"type", "protocol_version", "request_id", "session_id"}
         if set(request) != required:
             raise VisionServiceError("CALIBRATION_ABORT_INVALID", "九点取消请求字段无效。")
-        request_id, session_id = self._ids(request); self._assert_serial(request)
+        request_id, session_id = self._ids(request)
         self._require_calibration(session_id); self._calibration = None
         return {
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "type": "calibration_abort_result", "success": True,
-            "request_id": request_id, "session_id": session_id, "camera_serial": self.serial,
+            "request_id": request_id, "session_id": session_id,
         }
 
     def _calibration_validate_capture(self, request: dict[str, Any]) -> dict[str, Any]:
-        required = {"type", "protocol_version", "request_id", "session_id", "scene", "validation_kind", "camera_serial"}
+        required = {"type", "protocol_version", "request_id", "session_id", "scene", "validation_kind"}
         if set(request) != required:
             raise VisionServiceError("CALIBRATION_VALIDATE_INVALID", "九点方向验证请求字段无效。")
-        request_id, session_id = self._ids(request); self._assert_serial(request)
+        request_id, session_id = self._ids(request)
         scene = request.get("scene"); kind = request.get("validation_kind")
         if scene not in {"blocks", "trays"} or kind not in {"x_positive", "y_positive", "angle_zero", "angle_positive_10deg"}:
             raise VisionServiceError("CALIBRATION_VALIDATE_INVALID", "九点方向验证场景或类型无效。")
@@ -589,7 +583,7 @@ class RealMvsVisionService:
         except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
             raise VisionServiceError("CALIBRATION_CANDIDATE_INVALID", "九点候选文件无法读取。") from exc
         calibration = ApprovedCalibration(
-            scene, str(value["calibration_id"]), self.serial, str(value["active_tcp"]),
+            scene, str(value["calibration_id"]), str(value["active_tcp"]),
             str(value["photo_point"]), int(value["image_width"]), int(value["image_height"]), matrix,
             {color: {key: float(item[key]) for key in ("pixel_u", "pixel_v", "r_image_deg", "confidence")}
              for color, item in value.get("reference_detections", {}).items()},
@@ -613,7 +607,7 @@ class RealMvsVisionService:
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "type": "calibration_validate_result", "success": True,
             "request_id": request_id, "session_id": session_id, "scene": scene,
-            "validation_kind": kind, "camera_serial": self.serial,
+            "validation_kind": kind,
             "captured_at": captured_at, "frame_number": capture.frame_number,
             "image_path": str(image_path), "raw_image_path": str(raw_path),
             "annotated_image_path": str(image_path), "detection_summary": summary,
@@ -701,11 +695,10 @@ class RealMvsVisionService:
             raise VisionServiceError("IMAGE_SAVE_FAILED", f"{label}保存失败：{exc}") from exc
 
     def _capture_task_card(self, request: dict[str, Any]) -> dict[str, Any]:
-        required = {"type", "protocol_version", "request_id", "session_id", "scene", "profile", "camera_serial"}
+        required = {"type", "protocol_version", "request_id", "session_id", "scene", "profile"}
         if set(request) != required or request.get("scene") != "task_card" or request.get("profile") != "task_card":
             raise VisionServiceError("TASK_CAPTURE_INVALID", "任务卡拍照请求字段或 profile不匹配。")
         request_id, session_id = self._ids(request)
-        self._assert_serial(request)
         capture = self.camera.capture(self.profiles["task_card"])
         if not capture.parameters_applied:
             raise VisionServiceError("PROFILE_APPLY_FAILED", "任务卡采集参数未成功写入。")
@@ -716,7 +709,7 @@ class RealMvsVisionService:
             "type": "capture_result", "success": True,
             "request_id": request_id, "session_id": session_id,
             "scene": "task_card", "profile": "task_card",
-            "data_origin": "camera_vision", "camera_serial": self.serial,
+            "data_origin": "camera_vision",
             "captured_at": captured_at, "image_id": f"{request_id}-F{capture.frame_number}",
             "frame_number": capture.frame_number, "image_width": int(capture.image_bgr.shape[1]),
             "image_height": int(capture.image_bgr.shape[0]), "image_path": str(image_path),
@@ -724,16 +717,15 @@ class RealMvsVisionService:
         }
 
     def _capture_and_locate(self, request: dict[str, Any]) -> dict[str, Any]:
-        common = {"type", "protocol_version", "request_id", "session_id", "scene", "photo_point", "camera_serial", "calibration_id", "active_tcp"}
+        common = {"type", "protocol_version", "request_id", "session_id", "scene", "photo_point", "calibration_id", "active_tcp"}
         scene = request.get("scene")
         expected_fields = common | ({"target_color"} if scene == "blocks" else set())
         if scene not in {"blocks", "trays"} or set(request) != expected_fields:
             raise VisionServiceError("WORKSPACE_REQUEST_INVALID", "工作区拍照请求字段或场景无效。")
         request_id, session_id = self._ids(request)
-        self._assert_serial(request)
         calibration_path = self._single_calibration_file(scene)
         calibration = load_approved_calibration(
-            calibration_path, scene=scene, camera_serial=self.serial,
+            calibration_path, scene=scene,
             active_tcp=str(request["active_tcp"]), calibration_id=str(request["calibration_id"]),
         )
         if calibration.photo_point != request.get("photo_point"):
@@ -775,7 +767,7 @@ class RealMvsVisionService:
         base = {
             "service": SERVICE_NAME, "protocol_version": PROTOCOL_VERSION,
             "request_id": request_id, "scene": scene, "data_origin": "camera_vision",
-            "camera_serial": self.serial, "calibration_id": calibration.calibration_id,
+            "calibration_id": calibration.calibration_id,
             "active_tcp": calibration.active_tcp, "coordinate_frame": "active_tool_at_photo_pose",
             "photo_point": calibration.photo_point,
             "success": True, "captured_at": captured_at,
@@ -796,10 +788,6 @@ class RealMvsVisionService:
         if not isinstance(request_id, str) or SAFE_ID.fullmatch(request_id) is None or not isinstance(session_id, str) or SAFE_ID.fullmatch(session_id) is None:
             raise VisionServiceError("INVALID_ID", "请求号或 session编号无效。")
         return request_id, session_id
-
-    def _assert_serial(self, request: dict[str, Any]) -> None:
-        if request.get("camera_serial") not in {self.serial, self.configured_serial}:
-            raise VisionServiceError("CAMERA_IDENTITY_MISMATCH", "请求的相机序列号与当前唯一相机不一致。")
 
     def _single_calibration_file(self, scene: str) -> Path:
         directory = (self.calibration_root / scene).resolve()
@@ -851,7 +839,7 @@ def serve() -> int:
     try:
         with _TcpServer((service.endpoint.host, service.endpoint.port), _RequestHandler) as server:
             server.vision_service = service
-            print(f"真实 MVS视觉服务已就绪：{service.endpoint.host}:{service.endpoint.port}，相机序列号={service.serial}", flush=True)
+            print(f"真实 MVS视觉服务已就绪：{service.endpoint.host}:{service.endpoint.port}", flush=True)
             server.serve_forever(poll_interval=0.2)
     finally:
         service.close()

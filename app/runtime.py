@@ -13,7 +13,7 @@ from voice.qwen_recognizer import recognize_task_card
 from .config import endpoints, load_all
 from .coordinator import CompetitionCoordinator
 from .integrity import current_runtime_fingerprint
-from .manual_text_input import ManualTextInput
+from .manual_text_input import CountdownInput, ManualTextInput
 from .paths import REAL_CALIBRATION_DIR, REAL_CONFIG_DIR, SESSION_DIR
 from .real_ports import ConfiguredRobotPort
 from .robot_gateway import AuboRealGateway
@@ -54,10 +54,15 @@ def build_real_runtime(
     stop_event: threading.Event,
     progress: Callable[[dict[str, Any]], None],
     manual_text_input: ManualTextInput | None = None,
+    input_mode: str = "voice",
 ) -> RealCompetitionRuntime:
     """仅由用户点击正式启动后在 Robot Worker 线程调用。"""
 
     configs = load_all()
+    if input_mode not in {"voice", "text", "countdown"}:
+        raise RuntimeBuildError(f"不支持的输入模式：{input_mode}")
+    if input_mode == "text" and manual_text_input is None:
+        raise RuntimeBuildError("文字控制模式缺少文字输入通道。")
     configured_endpoints = endpoints(configs["endpoints"])
     for role in ("robot_rpc", "vision_service", "speech_service"):
         if role not in configured_endpoints:
@@ -72,18 +77,38 @@ def build_real_runtime(
         calibration_ids = {scene: _calibration_id(scene) for scene in ("blocks", "trays")}
         vision = RealVisionClient(
             configured_endpoints["vision_service"],
-            camera_serial=configs["camera"]["serial_number"],
             active_tcp=configs["robot"]["active_tcp"]["name"],
             calibration_ids=calibration_ids,
             fresh_frame_max_age_ms=int(configs["camera"]["fresh_frame_max_age_ms"]),
             visual_result_callback=lambda payload: progress({**payload, "phase": "visual_result"}),
         )
         vision.health()
-        progress({"phase": "vision_identity", "message": "真实 MVS视觉服务与相机身份通过。"})
+        progress({"phase": "vision_identity", "message": "真实 MVS视觉服务已就绪。"})
         speech_endpoint = configured_endpoints["speech_service"]
-        if manual_text_input is None:
+        trigger = configs["competition"]["task_trigger"]
+        command_input: ManualTextInput | CountdownInput | None = manual_text_input
+        if input_mode == "countdown":
+            countdown = configs["competition"].get("countdown_control", {})
+            try:
+                wakeup_delay_s = float(countdown["wakeup_delay_s"])
+                command_delay_s = float(countdown["command_delay_s"])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise RuntimeBuildError("competition.json 缺少有效的倒计时控制秒数。") from exc
+            command_input = CountdownInput(
+                wake_phrase=str(trigger["wake_word"]),
+                command_phrase=str(trigger["phrase"]),
+                wakeup_delay_s=wakeup_delay_s,
+                command_delay_s=command_delay_s,
+            )
+
+        if command_input is None:
             speech_client.health(speech_endpoint)
             progress({"phase": "speech_identity", "message": "AI语音盒子身份与 ASR/TTS能力通过。"})
+        elif input_mode == "countdown":
+            progress({
+                "phase": "countdown_mode",
+                "message": "倒计时控制已启用：首次自动唤醒并发送识别指令，后续自动发送识别指令；跳过ASR健康门禁。",
+            })
         else:
             progress({
                 "phase": "manual_text_mode",
@@ -100,24 +125,23 @@ def build_real_runtime(
             fingerprint_provider=current_runtime_fingerprint,
             on_command=lambda command: progress({"phase": "robot_command", "message": command}),
         )
-        trigger = configs["competition"]["task_trigger"]
-
         def speak_best_effort(text: str) -> None:
             try:
                 speech_client.speak(speech_endpoint, text)
             except Exception as exc:
-                progress({"phase": "tts_warning", "message": f"语音播报失败，不阻止文字控制：{exc}"})
+                progress({"phase": "tts_warning", "message": f"语音播报失败，不阻止当前控制流程：{exc}"})
 
         def text_wakeup() -> None:
             reply = "我已就绪，请下达指令"
-            progress({"phase": "manual_text_reply", "message": reply})
+            phase = "countdown_reply" if input_mode == "countdown" else "manual_text_reply"
+            progress({"phase": phase, "message": reply})
             speak_best_effort(reply)
 
         listener = (
             (lambda wakeup: speech_client.listen(speech_endpoint, wakeup_required=wakeup, timeout_s=30.0))
-            if manual_text_input is None
+            if command_input is None
             else (
-                lambda wakeup: manual_text_input.listen(
+                lambda wakeup: command_input.listen(
                     wakeup,
                     stop_event=stop_event,
                     progress=progress,
@@ -134,7 +158,6 @@ def build_real_runtime(
             speaker=lambda text: speech_client.speak(speech_endpoint, text),
             session_id=session_id,
             session_dir=SESSION_DIR / session_id,
-            camera_serial=configs["camera"]["serial_number"],
             config_fingerprint=fingerprint,
             points=configs["motion"]["points"],
             reference_anchors=configs["motion"]["reference_anchors"],

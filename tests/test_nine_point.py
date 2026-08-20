@@ -31,7 +31,7 @@ class NinePointTest(unittest.TestCase):
         samples = self._samples(); fit = fit_pixel_to_tool(samples)
         self.assertLess(fit.max_error_mm, 1e-6)
         candidate = build_candidate(
-            scene="blocks", camera_serial="CAM1", robot_serial="ROB1", active_tcp="TCP1",
+            scene="blocks", robot_serial="ROB1", active_tcp="TCP1",
             photo_point="blocks_photo", image_width=400, image_height=300, target_color="红",
             step_x_mm=20, step_y_mm=15, samples=samples, fit=fit,
             reference_detections=self._references(),
@@ -54,7 +54,7 @@ class NinePointTest(unittest.TestCase):
     def test_operator_can_activate_candidate_without_direction_validation(self) -> None:
         samples = self._samples(); fit = fit_pixel_to_tool(samples)
         candidate = build_candidate(
-            scene="blocks", camera_serial="CAM1", robot_serial="ROB1", active_tcp="TCP1",
+            scene="blocks", robot_serial="ROB1", active_tcp="TCP1",
             photo_point="blocks_photo", image_width=400, image_height=300, target_color="红",
             step_x_mm=20, step_y_mm=15, samples=samples, fit=fit,
             reference_detections=self._references(),
@@ -75,7 +75,7 @@ class NinePointTest(unittest.TestCase):
             sample["raw_image_path"] = str(evidence / f"point-{index}.png")
             sample["annotated_image_path"] = str(evidence / f"point-{index}-annotated.png")
         candidate = build_candidate(
-            scene="blocks", camera_serial="CAM1", robot_serial="ROB1", active_tcp="TCP1",
+            scene="blocks", robot_serial="ROB1", active_tcp="TCP1",
             photo_point="blocks_photo", image_width=400, image_height=300, target_color="红",
             step_x_mm=20, step_y_mm=15, samples=samples, fit=fit_pixel_to_tool(samples),
             reference_detections=self._references(),

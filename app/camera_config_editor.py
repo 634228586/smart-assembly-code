@@ -4,7 +4,6 @@ import json
 import hashlib
 import math
 import os
-import re
 import tempfile
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -17,16 +16,14 @@ PROFILE_LABELS = {
     "trays": "托盘",
 }
 DETECTOR_COLORS = ("红", "橙", "黄", "绿", "蓝", "紫")
-SERIAL_NUMBER = re.compile(r"[A-Za-z0-9_.\-]{1,128}\Z")
 
 
 class CameraConfigInputError(ValueError):
     pass
 
 
-def load_camera_editor_values(path: Path) -> tuple[str, dict[str, dict[str, float | int | None]]]:
+def load_camera_editor_values(path: Path) -> dict[str, dict[str, float | int | None]]:
     camera = _read_json(path)
-    serial = "" if camera.get("serial_number") == "UNSET" else str(camera.get("serial_number", ""))
     profiles: dict[str, dict[str, float | int | None]] = {}
     raw_profiles = camera.get("profiles", {})
     for key in PROFILE_KEYS:
@@ -44,13 +41,10 @@ def load_camera_editor_values(path: Path) -> tuple[str, dict[str, dict[str, floa
             "offset_x": _optional_int(roi.get("offset_x") if isinstance(roi, dict) else None),
             "offset_y": _optional_int(roi.get("offset_y") if isinstance(roi, dict) else None),
         }
-    return serial, profiles
+    return profiles
 
 
-def save_camera_editor_values(path: Path, *, serial_number: str, profile_values: Mapping[str, Mapping[str, Any]]) -> None:
-    serial = str(serial_number).strip()
-    if SERIAL_NUMBER.fullmatch(serial) is None:
-        raise CameraConfigInputError("相机序列号必须是 1 至 128 个字母、数字、点、下划线或连字符；请从当前真实 MVS设备信息抄写。")
+def save_camera_editor_values(path: Path, *, profile_values: Mapping[str, Mapping[str, Any]]) -> None:
     if set(profile_values) != set(PROFILE_KEYS):
         raise CameraConfigInputError("task_card、blocks、trays 三套采集参数必须全部填写。")
 
@@ -86,7 +80,6 @@ def save_camera_editor_values(path: Path, *, serial_number: str, profile_values:
     profiles = camera.get("profiles")
     if not isinstance(profiles, dict) or set(PROFILE_KEYS) - set(profiles):
         raise CameraConfigInputError("camera.json缺少三套正式 profile。")
-    camera["serial_number"] = serial
     for key in PROFILE_KEYS:
         profile = profiles[key]
         if not isinstance(profile, dict):

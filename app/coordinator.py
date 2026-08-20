@@ -37,7 +37,6 @@ class CompetitionCoordinator:
         speaker: Callable[[str], None] | None,
         session_id: str,
         session_dir: Path,
-        camera_serial: str,
         config_fingerprint: str,
         points: dict[str, list[float]],
         reference_anchors: dict[str, Any],
@@ -53,7 +52,6 @@ class CompetitionCoordinator:
         self.speaker = speaker
         self.session_id = session_id
         self.session_dir = session_dir.resolve()
-        self.camera_serial = camera_serial
         self.config_fingerprint = config_fingerprint
         self.points = points
         self.reference_anchors = reference_anchors
@@ -90,7 +88,7 @@ class CompetitionCoordinator:
         try:
             model_result = self.recognizer(frame.image_path)
             formal = build_recognition_result(model_result, frame=frame)
-            return validate_recognition_result(formal, session_dir=self.session_dir, camera_serial=self.camera_serial)
+            return validate_recognition_result(formal, session_dir=self.session_dir)
         except Exception as exc:
             self._emit("recognition_failed", f"识别失败：{exc}")
             self._speak_best_effort("识别失败")

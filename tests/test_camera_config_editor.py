@@ -24,7 +24,7 @@ class CameraConfigEditorTest(unittest.TestCase):
             }
             if key != "task_card": profiles[key]["detector"] = {"approved": True, "keep": 7}
         path.write_text(json.dumps({
-            "schema_version": 1, "sdk_family": "hikrobot_mvs", "serial_number": "UNSET",
+            "schema_version": 1, "sdk_family": "hikrobot_mvs",
             "mounting": "eye_in_hand", "fresh_frame_max_age_ms": 1000, "profiles": profiles,
         }), encoding="utf-8")
         return path
@@ -39,17 +39,15 @@ class CameraConfigEditorTest(unittest.TestCase):
     def test_save_preserves_structure_and_revokes_approvals(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             path = self._file(Path(temp))
-            save_camera_editor_values(path, serial_number="DA1234567", profile_values=self._values())
+            save_camera_editor_values(path, profile_values=self._values())
             camera = json.loads(path.read_text(encoding="utf-8"))
-            self.assertEqual(camera["serial_number"], "DA1234567")
             self.assertEqual(camera["mounting"], "eye_in_hand")
             self.assertEqual(camera["profiles"]["blocks"]["roi"]["width"], 1920)
             self.assertFalse(camera["profiles"]["task_card"]["approved"])
             self.assertFalse(camera["profiles"]["blocks"]["detector"]["approved"])
             self.assertEqual(camera["profiles"]["blocks"]["detector"]["roi"], [0, 0, 1920, 1080])
             self.assertEqual(camera["profiles"]["blocks"]["detector"]["keep"], 7)
-            serial, profiles = load_camera_editor_values(path)
-            self.assertEqual(serial, "DA1234567")
+            profiles = load_camera_editor_values(path)
             self.assertEqual(profiles["trays"]["height"], 1080)
 
     def test_invalid_or_incomplete_values_are_rejected(self) -> None:
@@ -57,12 +55,12 @@ class CameraConfigEditorTest(unittest.TestCase):
             path = self._file(Path(temp)); values = self._values()
             values["task_card"]["width"] = "1.5"
             with self.assertRaises(CameraConfigInputError):
-                save_camera_editor_values(path, serial_number="DA123", profile_values=values)
+                save_camera_editor_values(path, profile_values=values)
 
     def test_detector_requires_six_colors_and_exact_validated_hash(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             path = self._file(Path(temp))
-            save_camera_editor_values(path, serial_number="DA123", profile_values=self._values())
+            save_camera_editor_values(path, profile_values=self._values())
             hsv = {
                 color: [{"lower": [index * 10, 60, 60], "upper": [index * 10 + 9, 255, 255]}]
                 for index, color in enumerate(("红", "橙", "黄", "绿", "蓝", "紫"))
@@ -95,7 +93,7 @@ class CameraConfigEditorTest(unittest.TestCase):
     def test_profile_approval_requires_exact_true_readback_hash(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             path = self._file(Path(temp))
-            save_camera_editor_values(path, serial_number="DA123", profile_values=self._values())
+            save_camera_editor_values(path, profile_values=self._values())
             camera = json.loads(path.read_text(encoding="utf-8")); profile = camera["profiles"]["task_card"]
             import hashlib
             digest = hashlib.sha256(json.dumps(profile, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()
@@ -107,7 +105,7 @@ class CameraConfigEditorTest(unittest.TestCase):
     def test_operator_can_approve_complete_profiles_without_readback(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             path = self._file(Path(temp))
-            save_camera_editor_values(path, serial_number="DA123", profile_values=self._values())
+            save_camera_editor_values(path, profile_values=self._values())
             approve_profile_batch_by_operator(path)
             camera = json.loads(path.read_text(encoding="utf-8"))
             self.assertTrue(all(camera["profiles"][name]["approved"] is True for name in PROFILE_KEYS))
@@ -119,7 +117,7 @@ class CameraConfigEditorTest(unittest.TestCase):
     def test_three_profile_approval_is_atomic(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             path = self._file(Path(temp))
-            save_camera_editor_values(path, serial_number="DA123", profile_values=self._values())
+            save_camera_editor_values(path, profile_values=self._values())
             camera = json.loads(path.read_text(encoding="utf-8"))
             import hashlib
             hashes = {

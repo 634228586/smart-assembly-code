@@ -47,14 +47,13 @@ class DirectAssemblyWorker(QObject):
 
             vision = RealVisionClient(
                 configured["vision_service"],
-                camera_serial=configs["camera"]["serial_number"],
                 active_tcp=configs["robot"]["active_tcp"]["name"],
                 calibration_ids=calibration_ids,
                 fresh_frame_max_age_ms=int(configs["camera"]["fresh_frame_max_age_ms"]),
                 visual_result_callback=lambda payload: self.progress.emit({**payload, "phase": "visual_result"}),
             )
             vision.health()
-            self.progress.emit({"phase": "vision_identity", "message": "真实 MVS视觉服务、相机身份和两套标定已通过。"})
+            self.progress.emit({"phase": "vision_identity", "message": "真实 MVS视觉服务和两套标定已通过。"})
 
             robot = ConfiguredRobotPort(
                 self.gateway,

@@ -16,7 +16,7 @@ class CompetitionWorker(QObject):
 
     def __init__(self, session: CompetitionSession, *, input_mode: str = "voice") -> None:
         super().__init__()
-        if input_mode not in {"voice", "text"}:
+        if input_mode not in {"voice", "text", "countdown"}:
             raise ValueError(f"不支持的输入模式：{input_mode}")
         self.session = session
         self.input_mode = input_mode
@@ -32,6 +32,7 @@ class CompetitionWorker(QObject):
                 stop_event=self.stop_event,
                 progress=self.progress.emit,
                 manual_text_input=self.manual_text_input,
+                input_mode=self.input_mode,
             )
             self.runtime.coordinator.run()
         except Exception as exc:

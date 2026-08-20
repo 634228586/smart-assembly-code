@@ -294,14 +294,14 @@ class CameraAndTriggerTest(unittest.TestCase):
         self.assertTrue(command_matches("任务"))
         self.assertFalse(command_matches("完全无关"))
 
-    def test_capture_must_match_serial_request_profile_and_session(self) -> None:
+    def test_capture_must_match_request_profile_and_session(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             session = Path(temp).resolve(); image = session / "task_card" / "one.png"
             image.parent.mkdir(); image.write_bytes(b"capture")
-            request = CaptureRequest("r1", session, "task_card", "SERIAL-1")
-            frame = CapturedFrame("r1", "SERIAL-1", "task_card", image, "2026-08-10T00:00:00+08:00", True)
+            request = CaptureRequest("r1", session, "task_card")
+            frame = CapturedFrame("r1", "task_card", image, "2026-08-10T00:00:00+08:00", True)
             frame.validate_for(request)
-            bad = CapturedFrame("r1", "SERIAL-2", "task_card", image, frame.captured_at, True)
+            bad = CapturedFrame("r1", "blocks", image, frame.captured_at, True)
             with self.assertRaises(CameraContractError):
                 bad.validate_for(request)
 

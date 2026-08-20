@@ -1,7 +1,6 @@
 {
   "schema_version": 1,
   "sdk_family": "hikrobot_mvs",
-  "serial_number": "DA5723714",
   "mounting": "eye_in_hand",
   "fresh_frame_max_age_ms": 5000,
   "profiles": {

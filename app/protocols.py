@@ -28,7 +28,7 @@ def _timestamp(value: Any, field: str) -> datetime:
     return parsed
 
 
-def validate_recognition_result(payload: Any, *, session_dir: Path, camera_serial: str, now: datetime | None = None) -> dict[str, Any]:
+def validate_recognition_result(payload: Any, *, session_dir: Path, now: datetime | None = None) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ProtocolError("识别结果必须是 JSON 对象。")
     request_id = payload.get("request_id")
@@ -42,7 +42,7 @@ def validate_recognition_result(payload: Any, *, session_dir: Path, camera_seria
     if payload["success"] is True and task_type == "unknown":
         raise ProtocolError("识别成功时 task_type 不能为 unknown。")
     source = payload.get("source_image")
-    required_source = {"image_id", "path", "captured_at", "camera_serial", "capture_request_id"}
+    required_source = {"image_id", "path", "captured_at", "capture_request_id"}
     if not isinstance(source, dict) or set(source) != required_source:
         raise ProtocolError("source_image 必须包含真实采集身份字段。")
     image_path = Path(str(source.get("path", ""))).resolve()
@@ -52,8 +52,8 @@ def validate_recognition_result(payload: Any, *, session_dir: Path, camera_seria
         raise ProtocolError("任务卡图片不属于本场 session。") from exc
     if not image_path.is_file():
         raise ProtocolError("本次任务卡图片文件不存在。")
-    if source.get("camera_serial") != camera_serial or source.get("capture_request_id") != request_id:
-        raise ProtocolError("任务卡相机或拍照请求号不匹配。")
+    if source.get("capture_request_id") != request_id:
+        raise ProtocolError("任务卡拍照请求号不匹配。")
     captured = _timestamp(source.get("captured_at"), "source_image.captured_at")
     recognized = _timestamp(payload.get("recognized_at"), "recognized_at")
     if recognized < captured:
@@ -164,7 +164,6 @@ def validate_workspace_result(
     *,
     scene: str,
     request_id: str,
-    camera_serial: str,
     calibration_id: str,
     active_tcp: str,
     photo_point: str,
@@ -176,7 +175,7 @@ def validate_workspace_result(
         raise ProtocolError("视觉结果必须是 JSON 对象。")
     required = {
         "service": "real_mvs_vision", "protocol_version": 1, "request_id": request_id,
-        "scene": scene, "data_origin": "camera_vision", "camera_serial": camera_serial,
+        "scene": scene, "data_origin": "camera_vision",
         "calibration_id": calibration_id, "active_tcp": active_tcp,
         "photo_point": photo_point,
         "coordinate_frame": "active_tool_at_photo_pose", "success": True,

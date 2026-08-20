@@ -12,6 +12,10 @@
     "first_command_requires_wake_word": true,
     "later_commands_require_wake_word": false
   },
+  "countdown_control": {
+    "wakeup_delay_s": 5.0,
+    "command_delay_s": 5.0
+  },
   "workspace_capture": {
     "tray_panorama_once": true,
     "block_capture_each_cycle": true,

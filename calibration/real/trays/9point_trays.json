@@ -5,7 +5,6 @@
   "usable_for_real_robot": true,
   "approved": true,
   "calibration_id": "N9_TRAYS_ED76DA5E8916",
-  "camera_serial": "DA5723714",
   "robot_serial": "AUBO-i5H|192.168.34.10|rob1",
   "active_tcp": "flange_zero_tcp",
   "photo_point": "trays_photo",

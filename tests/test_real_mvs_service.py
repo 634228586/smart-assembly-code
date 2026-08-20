@@ -15,9 +15,6 @@ from vision.real_mvs_service import RealMvsVisionService
 from vision.workspace_localizer import estimate_six_color_area_range
 
 
-SERIAL = "MVS-REAL-001"
-
-
 def _profile(*, detector: bool) -> dict:
     value = {
         "approved": True, "exposure_us": 5000.0, "gain": 1.0,
@@ -48,8 +45,8 @@ class FakeCamera:
         self.closed = False
         self.capture_count = 0
 
-    def open_exact_serial(self, serial: str) -> MvsDevice:
-        return MvsDevice(0, serial, "TEST-CAMERA", "USB3")
+    def open_first_available(self) -> MvsDevice:
+        return MvsDevice(0, "TEST-CAMERA", "USB3")
 
     def capture(self, profile: dict, *, require_approved: bool = True) -> MvsCapture:
         self.capture_count += 1
@@ -79,7 +76,7 @@ class RealMvsServiceTest(unittest.TestCase):
         self.calibration_root = root / "calibration"
         self.session_root = root / "sessions"
         self.camera_config = {
-            "schema_version": 1, "sdk_family": "hikrobot_mvs", "serial_number": SERIAL,
+            "schema_version": 1, "sdk_family": "hikrobot_mvs",
             "mounting": "eye_in_hand", "fresh_frame_max_age_ms": 1000,
             "profiles": {"task_card": _profile(detector=False), "blocks": _profile(detector=True), "trays": _profile(detector=True)},
         }
@@ -100,7 +97,7 @@ class RealMvsServiceTest(unittest.TestCase):
         directory.mkdir(parents=True, exist_ok=True)
         calibration = {
             "schema_version": 1, "scene": scene, "data_origin": "camera_vision",
-            "usable_for_real_robot": True, "approved": True, "camera_serial": SERIAL,
+            "usable_for_real_robot": True, "approved": True,
             "active_tcp": "TCP-REAL", "calibration_id": calibration_id,
             "photo_point": f"{scene}_photo", "image_width": 200, "image_height": 200,
             "homography_pixel_to_tool_mm": [[0.1, 0.0, -10.0], [0.0, 0.1, -10.0], [0.0, 0.0, 1.0]],
@@ -114,7 +111,7 @@ class RealMvsServiceTest(unittest.TestCase):
 
     def _direct_client(self, calibration_ids: dict[str, str] | None = None) -> RealVisionClient:
         client = RealVisionClient(
-            self.service.endpoint, camera_serial=SERIAL, active_tcp="TCP-REAL",
+            self.service.endpoint, active_tcp="TCP-REAL",
             calibration_ids=calibration_ids, fresh_frame_max_age_ms=1000,
         )
         client._exchange = self.service.handle  # type: ignore[method-assign]
@@ -145,7 +142,7 @@ class RealMvsServiceTest(unittest.TestCase):
         self.assertEqual(health["status"], "ready")
         result = self.service.handle({
             "type": "capture_frame", "protocol_version": 1, "request_id": "CARD-1",
-            "session_id": "SESSION-1", "scene": "task_card", "profile": "task_card", "camera_serial": SERIAL,
+            "session_id": "SESSION-1", "scene": "task_card", "profile": "task_card",
         })
         self.assertTrue(result["success"])
         self.assertEqual(result["data_origin"], "camera_vision")
@@ -211,7 +208,7 @@ class RealMvsServiceTest(unittest.TestCase):
         self.camera_config["profiles"]["task_card"]["approved"] = False
         result = self.service.handle({
             "type": "profile_validate", "protocol_version": 1, "request_id": "PROFILE-TASK",
-            "session_id": "PROFILE-SESSION", "profile": "task_card", "camera_serial": SERIAL,
+            "session_id": "PROFILE-SESSION", "profile": "task_card",
         })
         self.assertTrue(result["success"], result)
         self.assertTrue(result["parameters_applied"])
@@ -224,7 +221,7 @@ class RealMvsServiceTest(unittest.TestCase):
             "type": "manual_scene_capture", "protocol_version": 1,
             "request_id": "blocks-20260814-160000-000001",
             "session_id": "manual-blocks-20260814-160000-000000",
-            "scene": "blocks", "camera_serial": SERIAL,
+            "scene": "blocks",
         })
         self.assertTrue(result["success"], result)
         path = Path(result["image_path"])
@@ -280,7 +277,7 @@ class RealMvsServiceTest(unittest.TestCase):
         directory.mkdir(parents=True)
         calibration = {
             "schema_version": 1, "scene": "blocks", "data_origin": "camera_vision",
-            "usable_for_real_robot": True, "approved": True, "camera_serial": SERIAL,
+            "usable_for_real_robot": True, "approved": True,
             "active_tcp": "TCP-REAL", "calibration_id": "CAL-BLOCKS-1",
             "photo_point": "blocks_photo", "image_width": 200, "image_height": 200,
             "homography_pixel_to_tool_mm": [[0.1, 0.0, -10.0], [0.0, 0.1, -10.0], [0.0, 0.0, 1.0]],
@@ -293,7 +290,7 @@ class RealMvsServiceTest(unittest.TestCase):
         result = self.service.handle({
             "type": "capture_and_locate", "protocol_version": 1, "request_id": "BLOCK-1",
             "session_id": "SESSION-2", "scene": "blocks", "target_color": "红",
-            "photo_point": "blocks_photo", "camera_serial": SERIAL,
+            "photo_point": "blocks_photo",
             "calibration_id": "CAL-BLOCKS-1", "active_tcp": "TCP-REAL",
         })
         self.assertTrue(result["success"], result)
@@ -309,7 +306,7 @@ class RealMvsServiceTest(unittest.TestCase):
         result = self.service.handle({
             "type": "detector_validate", "protocol_version": 1,
             "request_id": "DETECT-FAIL-1", "session_id": "DETECT-FAIL-SESSION",
-            "scene": "blocks", "camera_serial": SERIAL,
+            "scene": "blocks",
         })
         self.assertFalse(result["success"])
         self.assertEqual(result["error_code"], "TARGET_NOT_FOUND")
@@ -318,14 +315,6 @@ class RealMvsServiceTest(unittest.TestCase):
         self.assertFalse(result["detection_summary"]["success"])
         self.assertEqual(len(result["detection_summary"]["colors"]), 6)
 
-    def test_wrong_serial_returns_explicit_recognition_failure(self) -> None:
-        result = self.service.handle({
-            "type": "capture_frame", "protocol_version": 1, "request_id": "CARD-2",
-            "session_id": "SESSION-3", "scene": "task_card", "profile": "task_card", "camera_serial": "OTHER",
-        })
-        self.assertFalse(result["success"])
-        self.assertIn("识别失败", result["message"])
-
     def test_real_nine_point_session_writes_unapproved_candidate(self) -> None:
         self.service.profiles["blocks"]["detector"]["approved"] = False
         self.service.profiles["blocks"]["detector"]["min_area_px"] = "UNSET"
@@ -333,7 +322,7 @@ class RealMvsServiceTest(unittest.TestCase):
         begin = self.service.handle({
             "type": "calibration_begin", "protocol_version": 1, "request_id": "N9-BEGIN", "session_id": "N9-SESSION",
             "scene": "blocks", "profile": "blocks", "target_color": "红", "photo_point": "blocks_photo",
-            "camera_serial": SERIAL, "robot_serial": "ROBOT-1", "active_tcp": "TCP-REAL", "step_x_mm": 20.0, "step_y_mm": 15.0,
+            "robot_serial": "ROBOT-1", "active_tcp": "TCP-REAL", "step_x_mm": 20.0, "step_y_mm": 15.0,
         })
         self.assertTrue(begin["success"], begin)
         tools = [(20, 15), (0, 15), (-20, 15), (-20, 0), (0, 0), (20, 0), (20, -15), (0, -15), (-20, -15)]
@@ -349,13 +338,13 @@ class RealMvsServiceTest(unittest.TestCase):
             self.camera.image = image
             point = self.service.handle({
                 "type": "calibration_capture_point", "protocol_version": 1, "request_id": f"N9-P{index}", "session_id": "N9-SESSION",
-                "camera_serial": SERIAL, "index": index, "actual_tcp_pose": [0, 0, 0, 0, 0, 0],
+                "index": index, "actual_tcp_pose": [0, 0, 0, 0, 0, 0],
                 "tool_x_mm": tool_x, "tool_y_mm": tool_y,
             })
             self.assertTrue(point["success"], point)
         self.service.profiles["blocks"]["detector"]["min_area_px"] = 100.0
         self.service.profiles["blocks"]["detector"]["max_area_px"] = 10000.0
-        finish = self.service.handle({"type": "calibration_finish", "protocol_version": 1, "request_id": "N9-FINISH", "session_id": "N9-SESSION", "camera_serial": SERIAL})
+        finish = self.service.handle({"type": "calibration_finish", "protocol_version": 1, "request_id": "N9-FINISH", "session_id": "N9-SESSION"})
         self.assertTrue(finish["success"], finish); self.assertFalse(finish["approved"])
         candidate = json.loads(Path(finish["candidate_path"]).read_text(encoding="utf-8"))
         self.assertEqual(len(candidate["samples"]), 9); self.assertFalse(candidate["usable_for_real_robot"])
@@ -366,7 +355,7 @@ class RealMvsServiceTest(unittest.TestCase):
                 "type": "calibration_begin", "protocol_version": 1,
                 "request_id": f"{session_id}-BEGIN", "session_id": session_id,
                 "scene": "blocks", "profile": "blocks", "target_color": "红",
-                "photo_point": "blocks_photo", "camera_serial": SERIAL,
+                "photo_point": "blocks_photo",
                 "robot_serial": "ROBOT-1", "active_tcp": "TCP-REAL",
                 "step_x_mm": 10.0, "step_y_mm": 10.0,
             })
@@ -384,7 +373,7 @@ class RealMvsServiceTest(unittest.TestCase):
         stale_point = self.service.handle({
             "type": "calibration_capture_point", "protocol_version": 1,
             "request_id": "OLD-P1", "session_id": "N9-OLD",
-            "camera_serial": SERIAL, "index": 1,
+            "index": 1,
             "actual_tcp_pose": [0, 0, 0, 0, 0, 0],
             "tool_x_mm": 10.0, "tool_y_mm": 10.0,
         })

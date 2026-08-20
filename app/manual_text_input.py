@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import queue
+import math
 import threading
+import time
 from typing import Any, Callable
 
 
@@ -57,3 +59,87 @@ class ManualTextInput:
         instruction = self._next(stop_event)
         progress({"phase": "manual_text_received", "message": f"收到文字：{instruction}"})
         return instruction
+
+
+class CountdownInput:
+    """Interruptible automatic replacement for the wake word and task-card command."""
+
+    def __init__(
+        self,
+        *,
+        wake_phrase: str = "小具同学",
+        command_phrase: str = "请开始识别任务卡",
+        wakeup_delay_s: float = 5.0,
+        command_delay_s: float = 5.0,
+    ) -> None:
+        if wakeup_delay_s < 0 or command_delay_s < 0:
+            raise ValueError("倒计时秒数不能为负数。")
+        self.wake_phrase = wake_phrase
+        self.command_phrase = command_phrase
+        self.wakeup_delay_s = float(wakeup_delay_s)
+        self.command_delay_s = float(command_delay_s)
+
+    @staticmethod
+    def _countdown(
+        delay_s: float,
+        *,
+        stop_event: threading.Event,
+        progress: Callable[[dict[str, Any]], None],
+        phase: str,
+        action: str,
+    ) -> None:
+        deadline = time.monotonic() + delay_s
+        last_remaining: int | None = None
+        while True:
+            if stop_event.is_set():
+                raise ManualTextInputStopped("收到人工停止请求，已取消倒计时自动指令。")
+            remaining_s = deadline - time.monotonic()
+            if remaining_s <= 0:
+                return
+            remaining = max(1, int(math.ceil(remaining_s)))
+            if remaining != last_remaining:
+                progress({
+                    "phase": phase,
+                    "message": f"倒计时：{remaining}秒后{action}。",
+                    "remaining_s": remaining,
+                })
+                last_remaining = remaining
+            if stop_event.wait(min(0.1, remaining_s)):
+                raise ManualTextInputStopped("收到人工停止请求，已取消倒计时自动指令。")
+
+    def listen(
+        self,
+        wakeup_required: bool,
+        *,
+        stop_event: threading.Event,
+        progress: Callable[[dict[str, Any]], None],
+        on_wakeup: Callable[[], None],
+    ) -> str:
+        if wakeup_required:
+            self._countdown(
+                self.wakeup_delay_s,
+                stop_event=stop_event,
+                progress=progress,
+                phase="countdown_waiting_wakeup",
+                action=f"自动发送“{self.wake_phrase}”",
+            )
+            progress({
+                "phase": "countdown_wakeup_sent",
+                "message": f"倒计时结束，已自动发送：{self.wake_phrase}",
+                "text": self.wake_phrase,
+            })
+            on_wakeup()
+
+        self._countdown(
+            self.command_delay_s,
+            stop_event=stop_event,
+            progress=progress,
+            phase="countdown_waiting_command",
+            action=f"自动发送“{self.command_phrase}”",
+        )
+        progress({
+            "phase": "countdown_command_sent",
+            "message": f"倒计时结束，已自动发送：{self.command_phrase}",
+            "text": self.command_phrase,
+        })
+        return self.command_phrase

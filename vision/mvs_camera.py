@@ -33,7 +33,6 @@ class MvsCameraError(RuntimeError):
 @dataclass(frozen=True)
 class MvsDevice:
     index: int
-    serial: str
     model: str
     transport: str
 
@@ -73,7 +72,7 @@ def sdk_files_available() -> bool:
 
 
 class MvsCamera:
-    """单台 MVS相机的窄边界；只允许按配置序列号打开。"""
+    """单台 MVS相机的窄边界；自动打开枚举到的第一台设备。"""
 
     def __init__(self, sdk: ModuleType | Any | None = None) -> None:
         self._runtime_dir = installed_runtime_dir()
@@ -122,20 +121,11 @@ class MvsCamera:
         self._devices = [self._describe(index, self._device_info(index)) for index in range(int(device_list.nDeviceNum))]
         return list(self._devices)
 
-    def open_exact_serial(self, expected_serial: str) -> MvsDevice:
-        serial = str(expected_serial).strip()
-        if not serial or serial == "UNSET":
-            raise MvsCameraError("SERIAL_UNSET", "真实 MVS相机序列号尚未配置。")
+    def open_first_available(self) -> MvsDevice:
         devices = self.enumerate_devices()
-        matches = [device for device in devices if device.serial == serial]
-        # 现场更换相机后配置可能暂时保留旧序列号；若 MVS 只枚举到一台
-        # 设备，直接使用这台设备，避免因旧身份配置阻断视觉服务启动。
-        if not matches and len(devices) == 1:
-            matches = devices
-        if len(matches) != 1:
-            found = ", ".join(device.serial or "<empty>" for device in devices) or "未发现相机"
-            raise MvsCameraError("SERIAL_MISMATCH", f"配置序列号 {serial} 未唯一匹配；枚举结果：{found}。")
-        selected = matches[0]
+        if not devices:
+            raise MvsCameraError("CAMERA_NOT_FOUND", "未枚举到可用的 MVS相机。")
+        selected = devices[0]
         self._camera = self._sdk.MvCamera()
         try:
             self._check(self._camera.MV_CC_CreateHandle(self._device_info(selected.index)), "CREATE_HANDLE_FAILED", "创建 MVS相机句柄失败。")
@@ -149,7 +139,7 @@ class MvsCamera:
 
     def capture(self, profile: dict[str, Any], *, timeout_ms: int = 3000, require_approved: bool = True) -> MvsCapture:
         if not self._opened or self._camera is None:
-            raise MvsCameraError("NOT_OPEN", "MVS相机尚未按序列号打开。")
+            raise MvsCameraError("NOT_OPEN", "MVS相机尚未打开。")
         if self._grabbing:
             self._check(self._camera.MV_CC_StopGrabbing(), "STOP_FAILED", "停止 MVS取流失败。")
             self._grabbing = False
@@ -186,7 +176,7 @@ class MvsCamera:
         """按保存的 profile 启动连续取流，仅供实时画面预览。"""
 
         if not self._opened or self._camera is None:
-            raise MvsCameraError("NOT_OPEN", "MVS相机尚未按序列号打开。")
+            raise MvsCameraError("NOT_OPEN", "MVS相机尚未打开。")
         if self._grabbing:
             self.stop_preview()
         self._apply_profile(profile, require_approved=require_approved)
@@ -222,7 +212,7 @@ class MvsCamera:
         """只读当前采集节点；不启动取流、不触发、不写入参数值。"""
 
         if not self._opened or self._camera is None:
-            raise MvsCameraError("NOT_OPEN", "MVS相机尚未按序列号打开。")
+            raise MvsCameraError("NOT_OPEN", "MVS相机尚未打开。")
         return self._profile_readback()
 
     def close(self) -> None:
@@ -344,7 +334,7 @@ class MvsCamera:
             if layer == int(getattr(self._sdk, constant, -1)):
                 transport, field = label, candidate; break
         special = getattr(info.SpecialInfo, field, None)
-        return MvsDevice(index, _decode(getattr(special, "chSerialNumber", b"")), _decode(getattr(special, "chModelName", b"")), transport)
+        return MvsDevice(index, _decode(getattr(special, "chModelName", b"")), transport)
 
     def _device_info(self, index: int) -> Any:
         assert self._device_list is not None

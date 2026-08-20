@@ -152,7 +152,6 @@ def build_recognition_result(model_result: dict[str, Any], *, frame: CapturedFra
         "image_id": frame.image_path.stem,
         "path": str(frame.image_path.resolve()),
         "captured_at": frame.captured_at,
-        "camera_serial": frame.camera_serial,
         "capture_request_id": frame.request_id,
     }
     raw_text = json.dumps(model_result, ensure_ascii=False, allow_nan=False)

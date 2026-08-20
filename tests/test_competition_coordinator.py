@@ -31,7 +31,7 @@ class FakeUnifiedVision:
         self.capture_count += 1
         image = session_dir / "task_card" / f"card-{self.capture_count}.png"
         image.parent.mkdir(parents=True, exist_ok=True); image.write_bytes(b"fresh-frame")
-        return CapturedFrame(request_id, "CAM-001", "task_card", image, datetime.now(timezone.utc).isoformat(), True)
+        return CapturedFrame(request_id, "task_card", image, datetime.now(timezone.utc).isoformat(), True)
     def locate_block(self, **kwargs):
         self.block_count += 1
         return {"dx_tool_m": 0.001, "dy_tool_m": -0.001, "r_image_rad": 0.1, "delta_x_tool_m": 0.0, "delta_y_tool_m": 0.0, "delta_r_rad": 0.01}
@@ -64,7 +64,7 @@ class CompetitionCoordinatorTest(unittest.TestCase):
             coordinator = CompetitionCoordinator(
                 session=session, robot=robot, vision=vision, recognizer=recognizer,
                 listener=lambda wakeup_required: "请", speaker=speaker,
-                session_id="session-1", session_dir=session_dir, camera_serial="CAM-001",
+                session_id="session-1", session_dir=session_dir,
                 config_fingerprint="approved", points={
                     "task_card_photo": [0, 1, 2, 3, 4, 5],
                     "blocks_photo": [1, 2, 3, 4, 5, 6],

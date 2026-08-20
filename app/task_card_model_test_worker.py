@@ -36,7 +36,6 @@ class TaskCardModelTestWorker(QObject):
             session_dir = SESSION_DIR / session_id
             vision = RealVisionClient(
                 configured["vision_service"],
-                camera_serial=configs["camera"]["serial_number"],
                 active_tcp=configs["robot"]["active_tcp"]["name"],
                 fresh_frame_max_age_ms=int(configs["camera"]["fresh_frame_max_age_ms"]),
             )
@@ -47,7 +46,6 @@ class TaskCardModelTestWorker(QObject):
             base: dict[str, Any] = {
                 "session_id": session_id,
                 "request_id": request_id,
-                "camera_serial": frame.camera_serial,
                 "captured_at": frame.captured_at,
                 "image_path": str(frame.image_path.resolve()),
             }
@@ -56,9 +54,7 @@ class TaskCardModelTestWorker(QObject):
                 diagnostic = recognize_task_card_with_diagnostics(frame.image_path)
                 model_result = diagnostic["model_result"]
                 formal = build_recognition_result(model_result, frame=frame)
-                validated = validate_recognition_result(
-                    formal, session_dir=session_dir, camera_serial=frame.camera_serial,
-                )
+                validated = validate_recognition_result(formal, session_dir=session_dir)
                 self.finished.emit({
                     **base,
                     "success": True,

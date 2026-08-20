@@ -32,7 +32,7 @@ class ProtocolTest(unittest.TestCase):
             "task_type": "task_2", "success": True, "confidence": 0.99, "recognized_at": now,
             "raw_text": "任务卡二", "source_image": {
                 "image_id": "capture", "path": str(image.resolve()), "captured_at": now,
-                "camera_serial": "MVS-REAL-001", "capture_request_id": request_id,
+                "capture_request_id": request_id,
             },
             "sequence": [
                 {"order": index + 1, "block_color": color, "tray_color": COLORS[(index + 1) % 6]}
@@ -43,21 +43,15 @@ class ProtocolTest(unittest.TestCase):
     def test_task2_requires_current_session_capture(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             session = Path(temp)
-            result = validate_recognition_result(self._task2(session), session_dir=session, camera_serial="MVS-REAL-001")
+            result = validate_recognition_result(self._task2(session), session_dir=session)
             self.assertEqual(len(result["sequence"]), 6)
-
-    def test_wrong_camera_is_rejected(self) -> None:
-        with tempfile.TemporaryDirectory() as temp:
-            session = Path(temp); payload = self._task2(session)
-            with self.assertRaises(ProtocolError):
-                validate_recognition_result(payload, session_dir=session, camera_serial="OTHER")
 
     def test_missing_task_card_file_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             session = Path(temp); payload = self._task2(session)
             Path(payload["source_image"]["path"]).unlink()
             with self.assertRaises(ProtocolError):
-                validate_recognition_result(payload, session_dir=session, camera_serial="MVS-REAL-001")
+                validate_recognition_result(payload, session_dir=session)
 
     def test_service_identity_is_required(self) -> None:
         with self.assertRaises(ProtocolError):
@@ -82,7 +76,7 @@ class ProtocolTest(unittest.TestCase):
             annotated_path = Path(temp) / "annotated.png"; annotated_path.write_bytes(b"annotated")
             payload = {
                 "service": "real_mvs_vision", "protocol_version": 1, "request_id": "r1",
-                "scene": "blocks", "data_origin": "camera_vision", "camera_serial": "MVS-REAL-001",
+                "scene": "blocks", "data_origin": "camera_vision",
                 "calibration_id": "CAL-1", "active_tcp": "TCP-1",
                 "coordinate_frame": "active_tool_at_photo_pose", "success": True,
                 "captured_at": datetime.now(timezone.utc).isoformat(), "target_color": "红",
@@ -93,16 +87,16 @@ class ProtocolTest(unittest.TestCase):
                 "detection": self._detection(),
             }
             payload["photo_point"] = "blocks_photo"
-            validate_workspace_result(payload, scene="blocks", request_id="r1", camera_serial="MVS-REAL-001", calibration_id="CAL-1", active_tcp="TCP-1", photo_point="blocks_photo")
+            validate_workspace_result(payload, scene="blocks", request_id="r1", calibration_id="CAL-1", active_tcp="TCP-1", photo_point="blocks_photo")
             payload["data_origin"] = "not-real"
             with self.assertRaises(ProtocolError):
-                validate_workspace_result(payload, scene="blocks", request_id="r1", camera_serial="MVS-REAL-001", calibration_id="CAL-1", active_tcp="TCP-1", photo_point="blocks_photo")
+                validate_workspace_result(payload, scene="blocks", request_id="r1", calibration_id="CAL-1", active_tcp="TCP-1", photo_point="blocks_photo")
 
     def test_workspace_old_frame_is_rejected(self) -> None:
         now = datetime.now(timezone.utc)
         payload = {
             "service": "real_mvs_vision", "protocol_version": 1, "request_id": "r-old",
-            "scene": "blocks", "data_origin": "camera_vision", "camera_serial": "MVS-REAL-001",
+            "scene": "blocks", "data_origin": "camera_vision",
             "calibration_id": "CAL-1", "active_tcp": "TCP-1",
             "coordinate_frame": "active_tool_at_photo_pose", "success": True,
             "captured_at": (now - timedelta(seconds=3)).isoformat(), "target_color": "红",
@@ -112,7 +106,7 @@ class ProtocolTest(unittest.TestCase):
         }
         with self.assertRaises(ProtocolError):
             payload["photo_point"] = "blocks_photo"
-            validate_workspace_result(payload, scene="blocks", request_id="r-old", camera_serial="MVS-REAL-001", calibration_id="CAL-1", active_tcp="TCP-1", photo_point="blocks_photo", now=now, fresh_frame_max_age_ms=1000)
+            validate_workspace_result(payload, scene="blocks", request_id="r-old", calibration_id="CAL-1", active_tcp="TCP-1", photo_point="blocks_photo", now=now, fresh_frame_max_age_ms=1000)
 
     def test_workspace_post_capture_processing_within_five_seconds_is_accepted(self) -> None:
         now = datetime.now(timezone.utc)
@@ -121,7 +115,7 @@ class ProtocolTest(unittest.TestCase):
             annotated_path = Path(temp) / "annotated.png"; annotated_path.write_bytes(b"annotated")
             payload = {
                 "service": "real_mvs_vision", "protocol_version": 1, "request_id": "r-slow",
-                "scene": "blocks", "data_origin": "camera_vision", "camera_serial": "MVS-REAL-001",
+                "scene": "blocks", "data_origin": "camera_vision",
                 "calibration_id": "CAL-1", "active_tcp": "TCP-1", "photo_point": "blocks_photo",
                 "coordinate_frame": "active_tool_at_photo_pose", "success": True,
                 "captured_at": (now - timedelta(seconds=3)).isoformat(), "target_color": COLORS[0],
@@ -133,7 +127,7 @@ class ProtocolTest(unittest.TestCase):
             }
 
             result = validate_workspace_result(
-                payload, scene="blocks", request_id="r-slow", camera_serial="MVS-REAL-001",
+                payload, scene="blocks", request_id="r-slow",
                 calibration_id="CAL-1", active_tcp="TCP-1", photo_point="blocks_photo",
                 request_started_at=now - timedelta(seconds=4), now=now, fresh_frame_max_age_ms=5000,
             )
@@ -147,7 +141,7 @@ class ProtocolTest(unittest.TestCase):
             annotated_path = Path(temp) / "annotated.png"; annotated_path.write_bytes(b"annotated")
             payload = {
                 "service": "real_mvs_vision", "protocol_version": 1, "request_id": "r-stale",
-                "scene": "blocks", "data_origin": "camera_vision", "camera_serial": "MVS-REAL-001",
+                "scene": "blocks", "data_origin": "camera_vision",
                 "calibration_id": "CAL-1", "active_tcp": "TCP-1", "photo_point": "blocks_photo",
                 "coordinate_frame": "active_tool_at_photo_pose", "success": True,
                 "captured_at": (now - timedelta(seconds=1)).isoformat(), "target_color": COLORS[0],
@@ -160,7 +154,7 @@ class ProtocolTest(unittest.TestCase):
 
             with self.assertRaisesRegex(ProtocolError, "早于本次拍照请求"):
                 validate_workspace_result(
-                    payload, scene="blocks", request_id="r-stale", camera_serial="MVS-REAL-001",
+                    payload, scene="blocks", request_id="r-stale",
                     calibration_id="CAL-1", active_tcp="TCP-1", photo_point="blocks_photo",
                     request_started_at=now - timedelta(milliseconds=500), now=now, fresh_frame_max_age_ms=5000,
                 )

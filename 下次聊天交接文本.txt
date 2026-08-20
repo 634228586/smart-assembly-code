@@ -19,7 +19,7 @@ E:\iwen-codex\装配赛正式代码\装配赛正式代码
 - 曾真实只读连接成功：SDK/Server 0.24.0，当时RobotMode Running、SafetyMode Normal、exec_id=-1、RuntimeMachine Stopped、TCP offset全零；已断开，未运动、未写IO。
 - TCP固定flange_zero_tcp，六项offset全零；四个关节点competition_standby/task_card_photo/blocks_photo/trays_photo已经从真实控制器读入motion.json，但尚未完整运动验收。
 - pick/place接触Z目前仍为0.1m候选值，需用界面的两个只读当前TCP Z按钮重新示教保存。
-- 相机唯一序列号DA3968689，眼在手；task_card不做九点，blocks/trays各自做真实九点。
+- 相机眼在手且由程序自动枚举；task_card不做九点，blocks/trays各自做真实九点。
 - AI盒子192.168.34.200:8765；/health曾返回200、ready=true、实际arm_speech_service/m28-4-real，但与正式客户端期望speech_release_server不一致且缺protocol_version/capabilities。/openapi.json和ASR/TTS协议尚未完成适配，禁止伪造身份或随便填协议。
 - DO0是光圈：True开、False关。吸盘使用工具数字输出：TOOL_IO[1]长期使能为1；TOOL_IO[0]为0时吸、1时放。禁止恢复旧DO1吸盘映射。
 - 用户已取消负载/重心、工具安装核验、真机运动总放行、批准哈希、重复汇总红项、吸盘及光圈real_wiring_verified的授权阻断，不要恢复。

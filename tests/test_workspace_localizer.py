@@ -49,7 +49,6 @@ class WorkspaceLocalizerTest(unittest.TestCase):
         calibration = ApprovedCalibration(
             scene="blocks",
             calibration_id="test",
-            camera_serial="test-camera",
             active_tcp="test-tcp",
             photo_point="blocks_photo",
             image_width=200,

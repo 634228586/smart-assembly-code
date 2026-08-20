@@ -71,7 +71,7 @@ PREFLIGHT_FRIENDLY: dict[str, tuple[str, str, str]] = {
     "完整配置集": ("正式配置文件能否正常读取", "确认比赛所需的全部配置文件存在、格式正确且没有损坏。", "正式目录的 config/real 文件夹"),
     "endpoints": ("机器人、视觉和语音连接地址是否填写完整", "检查各设备的 IP、端口和服务身份；缺失时程序不知道应该连接谁。", "config/real/endpoints.json；地址必须从真实设备现场确认"),
     "robot": ("真实机器人身份、活动TCP和负载是否填写完整", "检查唯一机器人名称/序列号、登录信息、活动TCP、负载及末端安装确认。", "“机器人现场配置”页和真实 ARCS"),
-    "camera": ("唯一MVS相机和三套拍照参数是否填写完整", "检查相机序列号、任务卡/方块/托盘三套参数及两套颜色检测参数。", "“相机与视觉”页"),
+    "camera": ("MVS相机和三套拍照参数是否填写完整", "检查任务卡/方块/托盘三套参数及两套颜色检测参数。", "“相机与视觉”页"),
     "motion": ("拍照点、六色抓放基准、速度和九点参数是否填写完整", "检查四个固定关节点、Block/Tray各六个完整TCP、比赛速度以及九点速度/步长。", "“机器人现场配置”和“维护与真实九点标定”页"),
     "suction_io": ("真实吸盘IO端口和有效电平是否确认", "检查吸盘使用哪个真实IO、吸取/释放电平及反馈输入，禁止猜测端口。", "真实控制柜接线与 config/real/suction_io.json"),
     "competition": ("比赛流程规则配置是否完整", "检查双任务卡、识别失败和停止撤权等比赛规则是否齐全。", "正式比赛配置；当前通常无需现场修改"),
@@ -107,7 +107,7 @@ def _friendly_action(check: Check) -> str:
     specific = {
         "endpoints": "从真实 ARCS、MVS服务和AI盒子确认各自IP/端口后写入配置；任何地址都不能猜测或互换。",
         "robot": "先在真实 ARCS确认机器人身份、活动TCP和负载，再把对应值填入“机器人现场配置”。",
-        "camera": "在“相机与视觉”填写唯一序列号和三套采集参数；使用 Block/Tray 拍照取图，离线分析后直接更新两套颜色参数。",
+        "camera": "在“相机与视觉”填写三套采集参数；使用 Block/Tray 拍照取图，离线分析后直接更新两套颜色参数。",
         "motion": "在“机器人现场配置”填写固定关节点并保存两个完整红色抓放TCP，在九点页填写实际速度、加速度和步长。",
         "suction_io": "查看真实控制柜接线或设备电气资料，确认输出编号和有效电平后再写入；没有依据时保持未配置。",
     }
@@ -251,11 +251,14 @@ class CompetitionWindow(QMainWindow):
         execution_layout.addWidget(self.stop_competition_button)
         layout.addWidget(execution)
         layout.addWidget(gate)
-        text_control = QGroupBox("语音 / 文字控制切换")
+        text_control = QGroupBox("语音 / 文字 / 倒计时控制切换")
         text_layout = QGridLayout(text_control)
         self.text_mode_button = QPushButton("切换到文字控制")
         self.text_mode_button.setCheckable(True)
         self.text_mode_button.toggled.connect(self._toggle_text_mode)
+        self.countdown_mode_button = QPushButton("切换到5秒倒计时控制")
+        self.countdown_mode_button.setCheckable(True)
+        self.countdown_mode_button.toggled.connect(self._toggle_countdown_mode)
         self.text_input_edit = QLineEdit()
         self.text_input_edit.setPlaceholderText("可先输入“小具同学”；建立授权并启动流程后再发送")
         self.text_input_edit.returnPressed.connect(self._send_text_instruction)
@@ -264,9 +267,10 @@ class CompetitionWindow(QMainWindow):
         self.text_control_status = QLabel("当前：语音控制。比赛启动前可切换为文字控制。")
         self.text_control_status.setWordWrap(True)
         text_layout.addWidget(self.text_mode_button, 0, 0)
-        text_layout.addWidget(self.text_input_edit, 0, 1)
-        text_layout.addWidget(self.send_text_button, 0, 2)
-        text_layout.addWidget(self.text_control_status, 1, 0, 1, 3)
+        text_layout.addWidget(self.countdown_mode_button, 0, 1, 1, 2)
+        text_layout.addWidget(self.text_input_edit, 1, 0, 1, 2)
+        text_layout.addWidget(self.send_text_button, 1, 2)
+        text_layout.addWidget(self.text_control_status, 2, 0, 1, 3)
         layout.addWidget(text_control)
         self._refresh_text_controls()
 
@@ -303,7 +307,7 @@ class CompetitionWindow(QMainWindow):
         layout.addWidget(model_test)
 
         task_info = QLabel(
-            "输入规则：语音和文字模式均首次需要“小具同学”唤醒；命令短语任意单字均可触发本次 MVS拍照。\n"
+            "输入规则：语音和文字模式均首次需要“小具同学”唤醒；倒计时模式在到达任务卡拍照点后自动按5秒+5秒触发，后续每次等待5秒自动识别。\n"
             "任务一卡只播报和记录；任务卡二收到合法六组数据后，在全部硬件门控有效时立即装夹。\n"
             "TTS失败为黄色警告，不阻止已验证的任务二执行；识别失败必须明确告知且绝不运动。"
         )
@@ -542,13 +546,9 @@ class CompetitionWindow(QMainWindow):
         warning.setWordWrap(True); warning.setStyleSheet("padding:10px;background:#fff4cc;font-weight:600;")
         layout.addWidget(warning)
 
-        identity = QGroupBox("唯一真实 MVS相机身份")
-        identity_layout = QHBoxLayout(identity)
-        identity_layout.addWidget(QLabel("设备序列号 Serial Number"))
-        self.camera_serial_edit = QLineEdit(); self.camera_serial_edit.setPlaceholderText("从 MVS设备列表/设备信息原样抄写，不能使用枚举序号")
-        identity_layout.addWidget(self.camera_serial_edit, 1)
-        identity_layout.addWidget(QLabel("安装方式：眼在手上（固定）"))
-        layout.addWidget(identity)
+        mounting = QLabel("相机由程序自动枚举并打开；安装方式：眼在手上（固定）")
+        mounting.setStyleSheet("padding:7px;color:#555;")
+        layout.addWidget(mounting)
 
         profiles_group = QGroupBox("三套锁定采集参数（全部采用软件触发）")
         profiles_layout = QVBoxLayout(profiles_group)
@@ -660,7 +660,7 @@ class CompetitionWindow(QMainWindow):
         self.camera_evidence_label.setWordWrap(True); evidence_layout.addWidget(self.camera_evidence_label); layout.addWidget(evidence)
 
         controls = QHBoxLayout()
-        self.camera_config_confirm = QCheckBox("我确认序列号和三套数值抄自当前真实 MVS相机，不是旧图片、旧相机或猜测值")
+        self.camera_config_confirm = QCheckBox("我确认三套数值来自当前真实 MVS相机，不是旧图片或猜测值")
         controls.addWidget(self.camera_config_confirm, 1)
         reload_button = QPushButton("重新加载配置"); reload_button.clicked.connect(self._reload_camera_config)
         save_button = QPushButton("保存并人工批准 MVS参数（不连接相机）"); save_button.clicked.connect(self._save_camera_config)
@@ -700,10 +700,9 @@ class CompetitionWindow(QMainWindow):
 
     def _reload_camera_config(self) -> None:
         try:
-            serial, profiles = load_camera_editor_values(REAL_CONFIG_DIR / "camera.json")
+            profiles = load_camera_editor_values(REAL_CONFIG_DIR / "camera.json")
         except CameraConfigInputError as exc:
             self.camera_config_status.setText(f"加载失败：{exc}"); self.camera_config_status.setStyleSheet("padding:7px;color:#a00000;"); return
-        self.camera_serial_edit.setText(serial)
         fields = ("exposure_us", "gain", "white_red", "white_green", "white_blue", "width", "height", "offset_x", "offset_y")
         for row, key in enumerate(PROFILE_KEYS):
             for column, field in enumerate(fields, start=1):
@@ -726,7 +725,7 @@ class CompetitionWindow(QMainWindow):
             for row, key in enumerate(PROFILE_KEYS)
         }
         try:
-            save_camera_editor_values(REAL_CONFIG_DIR / "camera.json", serial_number=self.camera_serial_edit.text(), profile_values=values)
+            save_camera_editor_values(REAL_CONFIG_DIR / "camera.json", profile_values=values)
             approve_profile_batch_by_operator(REAL_CONFIG_DIR / "camera.json")
         except (CameraConfigInputError, OSError) as exc:
             self.camera_config_status.setText(f"保存失败：{exc}"); self.camera_config_status.setStyleSheet("padding:7px;color:#a00000;"); return
@@ -736,7 +735,7 @@ class CompetitionWindow(QMainWindow):
         self.camera_config_confirm.setChecked(False)
         self.camera_config_status.setText("保存成功；三套采集参数已按现场确认人工批准，不连接相机、不做预先回读。颜色检测仍需单独处理。")
         self.camera_config_status.setStyleSheet("padding:7px;color:#087a26;")
-        self._log("用户保存唯一 MVS序列号和三套采集参数并人工批准；未枚举、打开、回读或触发相机。")
+        self._log("用户保存三套 MVS采集参数并人工批准；未枚举、打开、回读或触发相机。")
         self.run_preflight()
 
     def _approve_profiles_without_readback(self) -> None:
@@ -763,11 +762,10 @@ class CompetitionWindow(QMainWindow):
             self.point_capture_thread, self.point_move_thread, self.contact_capture_thread,
         )):
             return
-        serial = self.camera_serial_edit.text().strip()
         answer = QMessageBox.question(
             self,
             "确认只读真实MVS参数",
-            f"将独占连接序列号 {serial}，只读取当前曝光、增益、白平衡R/G/B、Width/Height/Offset。\n\n"
+            "将自动枚举并独占连接第一台可用 MVS相机，只读取当前曝光、增益、白平衡R/G/B、Width/Height/Offset。\n\n"
             "不会启动采集、不会软件触发、不会修改参数数值；读取白平衡时会切换R/G/B查看选择器。"
             "请先完全关闭MVS客户端和真实MVS视觉服务，避免相机被占用。是否继续？",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -781,7 +779,7 @@ class CompetitionWindow(QMainWindow):
         self.mvs_read_worker.finished.connect(self.mvs_read_thread.quit); self.mvs_read_worker.failed.connect(self.mvs_read_thread.quit)
         self.mvs_read_thread.finished.connect(self._cleanup_current_mvs_read)
         self.read_mvs_parameters_button.setEnabled(False)
-        self.camera_config_status.setText(f"正在只读连接 {serial}；不采图、不触发、不修改参数数值……")
+        self.camera_config_status.setText("正在自动连接可用 MVS相机；不采图、不触发、不修改参数数值……")
         self.mvs_read_thread.start(); self._refresh_authorization_button()
 
     def _on_current_mvs_read(self, payload: object) -> None:
@@ -800,7 +798,7 @@ class CompetitionWindow(QMainWindow):
             for column, value in enumerate(values, start=1):
                 self.camera_profiles_table.item(row, column).setText(str(value))
         self.camera_config_status.setText(
-            f"已从 {payload.get('model')} / {payload.get('serial_number')} 只读当前参数并填入三套表格；"
+            f"已从 {payload.get('model')} 只读当前参数并填入三套表格；"
             "尚未保存、尚未触发拍照、尚未批准。请检查后勾选确认并保存。"
         )
 
@@ -823,7 +821,7 @@ class CompetitionWindow(QMainWindow):
         self.profile_worker.finished.connect(self.profile_thread.quit); self.profile_worker.failed.connect(self.profile_thread.quit)
         self.profile_thread.finished.connect(self._cleanup_profile_worker)
         self.validate_profiles_button.setEnabled(False)
-        self.camera_config_status.setText("正在按唯一序列号使用真实MVS，依次设置、回读并触发 task_card / blocks / trays……")
+        self.camera_config_status.setText("正在使用自动枚举的真实MVS，依次设置、回读并触发 task_card / blocks / trays……")
         self.profile_thread.start(); self._refresh_authorization_button()
 
     def _on_profile_validation(self, payload: object) -> None:
@@ -2055,7 +2053,11 @@ class CompetitionWindow(QMainWindow):
             QMessageBox.critical(self, "不能启动", "当前没有有效比赛授权或流程已经运行。")
             return
         self.competition_thread = QThread(self)
-        input_mode = "text" if self.text_mode_button.isChecked() else "voice"
+        input_mode = (
+            "countdown" if self.countdown_mode_button.isChecked()
+            else "text" if self.text_mode_button.isChecked()
+            else "voice"
+        )
         self.competition_worker = CompetitionWorker(self.session, input_mode=input_mode)
         self.competition_worker.moveToThread(self.competition_thread)
         self.competition_thread.started.connect(self.competition_worker.run)
@@ -2073,6 +2075,8 @@ class CompetitionWindow(QMainWindow):
         self._refresh_authorization_button()
 
     def _toggle_text_mode(self, checked: bool) -> None:
+        if checked and self.countdown_mode_button.isChecked():
+            self.countdown_mode_button.setChecked(False)
         self.text_mode_button.setText("切换到语音控制" if checked else "切换到文字控制")
         self.text_control_status.setText(
             "当前：文字控制。现在可以预先输入；建立授权并启动流程后，先发送“小具同学”，收到回复后再发送任务指令。"
@@ -2080,10 +2084,21 @@ class CompetitionWindow(QMainWindow):
         )
         self._refresh_text_controls()
 
+    def _toggle_countdown_mode(self, checked: bool) -> None:
+        if checked and self.text_mode_button.isChecked():
+            self.text_mode_button.setChecked(False)
+        self.countdown_mode_button.setText("切换到语音控制" if checked else "切换到5秒倒计时控制")
+        self.text_control_status.setText(
+            "当前：5秒倒计时控制。到达任务卡拍照点后，首次5秒自动唤醒、再5秒自动识别；后续每次等待5秒自动识别。"
+            if checked else "当前：语音控制。比赛启动前可切换为文字或倒计时控制。"
+        )
+        self._refresh_text_controls()
+
     def _refresh_text_controls(self) -> None:
         running = isinstance(self.competition_worker, CompetitionWorker)
         text_mode = self.text_mode_button.isChecked()
         self.text_mode_button.setEnabled(self.competition_worker is None)
+        self.countdown_mode_button.setEnabled(self.competition_worker is None)
         self.text_input_edit.setEnabled(text_mode)
         self.send_text_button.setEnabled(running and text_mode)
         self.send_text_button.setToolTip("建立一次性比赛授权并启动正式流程后才可发送" if text_mode and not running else "")
@@ -2122,7 +2137,7 @@ class CompetitionWindow(QMainWindow):
         phase = str(value.get("phase", "event")); message = str(value.get("message", ""))
         line = f"[{phase}] {message}"
         self.monitor_status.setText(line)
-        if phase.startswith("manual_text"):
+        if phase.startswith("manual_text") or phase.startswith("countdown"):
             self.text_control_status.setText(message)
         if phase == "visual_result":
             self._show_visual_result(value, self.monitor_visual_status, self.monitor_visual_image)

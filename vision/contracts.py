@@ -13,13 +13,12 @@ class CaptureRequest:
     request_id: str
     session_dir: Path
     profile: str
-    expected_serial: str
 
     def validate(self) -> None:
         if self.profile not in {"task_card", "blocks", "trays"}:
             raise CameraContractError("未知相机配置角色。")
-        if not self.request_id or self.expected_serial == "UNSET":
-            raise CameraContractError("拍照请求号或真实相机序列号缺失。")
+        if not self.request_id:
+            raise CameraContractError("拍照请求号缺失。")
         if not self.session_dir.is_absolute():
             raise CameraContractError("session目录必须是绝对路径。")
 
@@ -27,7 +26,6 @@ class CaptureRequest:
 @dataclass(frozen=True)
 class CapturedFrame:
     request_id: str
-    camera_serial: str
     profile: str
     image_path: Path
     captured_at: str
@@ -35,7 +33,7 @@ class CapturedFrame:
 
     def validate_for(self, request: CaptureRequest) -> None:
         request.validate()
-        if self.request_id != request.request_id or self.camera_serial != request.expected_serial or self.profile != request.profile:
+        if self.request_id != request.request_id or self.profile != request.profile:
             raise CameraContractError("帧身份与本次拍照请求不匹配。")
         if not self.parameters_applied or not self.image_path.is_file():
             raise CameraContractError("相机参数未成功写入或图片未保存。")

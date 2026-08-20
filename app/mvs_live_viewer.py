@@ -24,12 +24,10 @@ class LiveCaptureWorker(QObject):
     def __init__(
         self,
         *,
-        serial: str,
         profile: dict[str, Any],
         camera_factory: Callable[[], Any] = MvsCamera,
     ) -> None:
         super().__init__()
-        self.serial = serial
         self.profile = profile
         self.camera_factory = camera_factory
         self._stop_event = threading.Event()
@@ -42,7 +40,7 @@ class LiveCaptureWorker(QObject):
         camera = None
         try:
             camera = self.camera_factory()
-            camera.open_exact_serial(self.serial)
+            camera.open_first_available()
             camera.start_preview(self.profile)
             previous = time.perf_counter()
             while not self._stop_event.is_set():
@@ -104,13 +102,11 @@ class MvsLiveViewerWindow(QMainWindow):
         if self._thread is not None:
             return
         config = load_json(self.camera_config_path)
-        serial = str(config.get("serial_number", "")).strip()
         profiles = config.get("profiles")
-        if not serial or not isinstance(profiles, dict) or not isinstance(profiles.get("blocks"), dict):
-            raise ValueError("camera.json缺少相机序列号或blocks参数。")
+        if not isinstance(profiles, dict) or not isinstance(profiles.get("blocks"), dict):
+            raise ValueError("camera.json缺少 blocks参数。")
         thread = QThread(self)
         worker = LiveCaptureWorker(
-            serial=serial,
             profile=dict(profiles["blocks"]),
             camera_factory=self.camera_factory,
         )

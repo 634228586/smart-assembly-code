@@ -110,7 +110,7 @@ class TaskCardModelDiagnosticTest(unittest.TestCase):
                 image = session_dir / "task_card" / "fresh.png"
                 image.parent.mkdir(parents=True, exist_ok=True); image.write_bytes(b"fresh")
                 return CapturedFrame(
-                    request_id, "CAM-TEST", "task_card", image,
+                    request_id, "task_card", image,
                     datetime.now(timezone.utc).isoformat(), True,
                 )
 
@@ -125,7 +125,7 @@ class TaskCardModelDiagnosticTest(unittest.TestCase):
                 patch("app.task_card_model_test_worker.SESSION_DIR", Path(temp)),
                 patch("app.task_card_model_test_worker.load_all", return_value={
                     "endpoints": {},
-                    "camera": {"serial_number": "CAM-TEST", "fresh_frame_max_age_ms": 5000},
+                    "camera": {"fresh_frame_max_age_ms": 5000},
                     "robot": {"active_tcp": {"name": "TCP-TEST"}},
                 }),
                 patch("app.task_card_model_test_worker.endpoints", return_value={"vision_service": object()}),

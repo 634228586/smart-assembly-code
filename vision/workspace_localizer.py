@@ -24,7 +24,6 @@ class WorkspaceRecognitionError(RuntimeError):
 class ApprovedCalibration:
     scene: str
     calibration_id: str
-    camera_serial: str
     active_tcp: str
     photo_point: str
     image_width: int
@@ -33,7 +32,7 @@ class ApprovedCalibration:
     reference_detections: dict[str, dict[str, float]]
 
 
-def load_approved_calibration(path: Path, *, scene: str, camera_serial: str, active_tcp: str, calibration_id: str) -> ApprovedCalibration:
+def load_approved_calibration(path: Path, *, scene: str, active_tcp: str, calibration_id: str) -> ApprovedCalibration:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -41,7 +40,7 @@ def load_approved_calibration(path: Path, *, scene: str, camera_serial: str, act
     expected = {
         "schema_version": 1, "scene": scene, "data_origin": "camera_vision",
         "usable_for_real_robot": True, "approved": True,
-        "camera_serial": camera_serial, "active_tcp": active_tcp,
+        "active_tcp": active_tcp,
         "calibration_id": calibration_id,
     }
     if any(raw.get(key) != value for key, value in expected.items()):
@@ -66,7 +65,7 @@ def load_approved_calibration(path: Path, *, scene: str, camera_serial: str, act
         raise WorkspaceRecognitionError("CALIBRATION_INVALID", "识别失败：六色基准中心或角度字段无效。") from exc
     if not all(np.isfinite(list(item.values())).all() for item in references.values()):
         raise WorkspaceRecognitionError("CALIBRATION_INVALID", "识别失败：六色基准中心或角度包含非有限数值。")
-    return ApprovedCalibration(scene, calibration_id, camera_serial, active_tcp, photo_point, width, height, matrix, references)
+    return ApprovedCalibration(scene, calibration_id, active_tcp, photo_point, width, height, matrix, references)
 
 
 def locate_colors(

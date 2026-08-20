@@ -94,16 +94,16 @@ def fit_pixel_to_tool(samples: Sequence[Mapping[str, Any]]) -> FitResult:
     )
 
 
-def calibration_id(scene: str, camera_serial: str, samples: Sequence[Mapping[str, Any]]) -> str:
+def calibration_id(scene: str, samples: Sequence[Mapping[str, Any]]) -> str:
     if scene not in SCENES:
         raise NinePointError("标定场景必须是 blocks或trays。")
-    material = json.dumps({"scene": scene, "camera_serial": camera_serial, "samples": list(samples)}, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    material = json.dumps({"scene": scene, "samples": list(samples)}, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     suffix = hashlib.sha256(material.encode("utf-8")).hexdigest()[:12].upper()
     return f"N9_{scene.upper()}_{suffix}"
 
 
 def build_candidate(
-    *, scene: str, camera_serial: str, robot_serial: str, active_tcp: str,
+    *, scene: str, robot_serial: str, active_tcp: str,
     photo_point: str, image_width: int, image_height: int,
     target_color: str, step_x_mm: float, step_y_mm: float,
     samples: Sequence[Mapping[str, Any]], fit: FitResult,
@@ -113,7 +113,7 @@ def build_candidate(
 ) -> dict[str, Any]:
     if scene not in SCENES or photo_point != f"{scene}_photo":
         raise NinePointError("标定场景与拍照点不匹配。")
-    for label, value in (("相机序列号", camera_serial), ("机器人序列号", robot_serial), ("活动TCP", active_tcp)):
+    for label, value in (("机器人序列号", robot_serial), ("活动TCP", active_tcp)):
         if not isinstance(value, str) or not value.strip() or value == "UNSET":
             raise NinePointError(f"{label}无效。")
     if not isinstance(image_width, int) or not isinstance(image_height, int) or min(image_width, image_height) <= 0:
@@ -126,7 +126,7 @@ def build_candidate(
                 item[field] = portable_project_path(item[field])
         item["residual_mm"] = residual
         stored_samples.append(item)
-    cid = calibration_id(scene, camera_serial, stored_samples)
+    cid = calibration_id(scene, stored_samples)
     references: dict[str, dict[str, float]] = {}
     if reference_detections is not None:
         if set(reference_detections) != {"红", "橙", "黄", "绿", "蓝", "紫"}:
@@ -151,7 +151,6 @@ def build_candidate(
         "usable_for_real_robot": False,
         "approved": False,
         "calibration_id": cid,
-        "camera_serial": camera_serial,
         "robot_serial": robot_serial,
         "active_tcp": active_tcp,
         "photo_point": photo_point,

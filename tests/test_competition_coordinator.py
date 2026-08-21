@@ -45,7 +45,7 @@ class CompetitionCoordinatorTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); session_dir = root / "session-1"
             session = CompetitionSession(); session.authorize(True)
-            robot = FakeRobot(); vision = FakeUnifiedVision(); events = []; calls = {"recognizer": 0, "speaker": 0}
+            robot = FakeRobot(); vision = FakeUnifiedVision(); events = []; spoken = []; calls = {"recognizer": 0, "speaker": 0}
 
             def recognizer(_path):
                 calls["recognizer"] += 1
@@ -56,8 +56,9 @@ class CompetitionCoordinatorTest(unittest.TestCase):
                     "sequence": [{"order": i + 1, "block_color": color, "tray_color": COLORS[(i + 1) % 6]} for i, color in enumerate(COLORS)],
                 }
 
-            def speaker(_text):
+            def speaker(text):
                 calls["speaker"] += 1
+                spoken.append(text)
                 if calls["speaker"] == 2:
                     raise RuntimeError("tts unavailable")
 
@@ -82,8 +83,56 @@ class CompetitionCoordinatorTest(unittest.TestCase):
             self.assertEqual(vision.block_count, 6)
             self.assertEqual(vision.tray_count, 1)
             self.assertEqual(robot.io, [True, False] * 6)
+            self.assertEqual(calls["speaker"], 3)
+            self.assertEqual(spoken[0], "装配现场正常。任务卡一识别完成，请更换下一张任务卡。")
+            self.assertEqual(spoken[2], "任务卡一和任务卡二均已完成。")
+            self.assertEqual(sum(event["phase"] == "command_matched" for event in events), 2)
             self.assertTrue(any(event["phase"] == "tts_warning" for event in events))
             self.assertEqual(robot.joints[-1], (0, 1, 2, 3, 4, 5))
+
+    def test_task2_then_task1_only_speaks_one_final_completion_message(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); session_dir = root / "session-2"
+            session = CompetitionSession(); session.authorize(True)
+            robot = FakeRobot(); vision = FakeUnifiedVision(); recognition_count = 0
+            wakeup_flags = []; spoken = []
+
+            def recognizer(_path):
+                nonlocal recognition_count
+                recognition_count += 1
+                if recognition_count == 1:
+                    return {
+                        "success": True, "task_type": "task_2", "confidence": 0.99,
+                        "sequence": [{"order": i + 1, "block_color": color, "tray_color": COLORS[(i + 1) % 6]} for i, color in enumerate(COLORS)],
+                    }
+                return {"success": True, "task_type": "task_1", "confidence": 0.99, "scene_description": "装配现场正常"}
+
+            def listener(wakeup_required):
+                wakeup_flags.append(wakeup_required)
+                return "请"
+
+            coordinator = CompetitionCoordinator(
+                session=session, robot=robot, vision=vision, recognizer=recognizer,
+                listener=listener, speaker=spoken.append,
+                session_id="session-2", session_dir=session_dir,
+                config_fingerprint="approved", points={
+                    "task_card_photo": [0, 1, 2, 3, 4, 5],
+                    "blocks_photo": [1, 2, 3, 4, 5, 6],
+                    "trays_photo": [6, 5, 4, 3, 2, 1],
+                }, reference_anchors={
+                    "blocks": {color: [0.3, 0.2, 0.1, 3.14, 0, 0] for color in COLORS},
+                    "trays": {color: [0.5, 0.4, 0.1, 3.14, 0, 0] for color in COLORS},
+                },
+            )
+            coordinator.run()
+
+            self.assertEqual(session.state, SessionState.COMPLETE)
+            self.assertEqual(wakeup_flags, [True, False])
+            self.assertEqual(spoken, [
+                "任务卡二识别完成，开始执行任务",
+                "任务卡二执行完成，我已返回任务卡拍照点，请下达指令。",
+                "装配现场正常。任务卡一识别完成，任务卡一和任务卡二均已完成。",
+            ])
 
 
 if __name__ == "__main__":

@@ -307,7 +307,7 @@ class CompetitionWindow(QMainWindow):
         layout.addWidget(model_test)
 
         task_info = QLabel(
-            "输入规则：语音和文字模式均首次需要“小具同学”唤醒；倒计时模式在到达任务卡拍照点后自动按5秒+5秒触发，后续每次等待5秒自动识别。\n"
+            "输入规则：语音和文字模式均首次需要“小具同学”唤醒；倒计时模式在到达任务卡拍照点后自动按5秒+5秒触发，第二张任务卡等待12秒自动识别。\n"
             "任务一卡只播报和记录；任务卡二收到合法六组数据后，在全部硬件门控有效时立即装夹。\n"
             "TTS失败为黄色警告，不阻止已验证的任务二执行；识别失败必须明确告知且绝不运动。"
         )
@@ -2089,7 +2089,7 @@ class CompetitionWindow(QMainWindow):
             self.text_mode_button.setChecked(False)
         self.countdown_mode_button.setText("切换到语音控制" if checked else "切换到5秒倒计时控制")
         self.text_control_status.setText(
-            "当前：5秒倒计时控制。到达任务卡拍照点后，首次5秒自动唤醒、再5秒自动识别；后续每次等待5秒自动识别。"
+            "当前：自动倒计时控制。到达任务卡拍照点后，首次5秒自动唤醒、再5秒自动识别；第二张任务卡等待12秒自动识别。"
             if checked else "当前：语音控制。比赛启动前可切换为文字或倒计时控制。"
         )
         self._refresh_text_controls()

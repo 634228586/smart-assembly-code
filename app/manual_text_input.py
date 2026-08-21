@@ -71,13 +71,16 @@ class CountdownInput:
         command_phrase: str = "请开始识别任务卡",
         wakeup_delay_s: float = 5.0,
         command_delay_s: float = 5.0,
+        next_command_delay_s: float | None = None,
     ) -> None:
-        if wakeup_delay_s < 0 or command_delay_s < 0:
+        normalized_next_delay = command_delay_s if next_command_delay_s is None else next_command_delay_s
+        if wakeup_delay_s < 0 or command_delay_s < 0 or normalized_next_delay < 0:
             raise ValueError("倒计时秒数不能为负数。")
         self.wake_phrase = wake_phrase
         self.command_phrase = command_phrase
         self.wakeup_delay_s = float(wakeup_delay_s)
         self.command_delay_s = float(command_delay_s)
+        self.next_command_delay_s = float(normalized_next_delay)
 
     @staticmethod
     def _countdown(
@@ -130,8 +133,9 @@ class CountdownInput:
             })
             on_wakeup()
 
+        command_delay_s = self.command_delay_s if wakeup_required else self.next_command_delay_s
         self._countdown(
-            self.command_delay_s,
+            command_delay_s,
             stop_event=stop_event,
             progress=progress,
             phase="countdown_waiting_command",

@@ -56,6 +56,7 @@ class CompetitionCoordinator:
         self.points = points
         self.reference_anchors = reference_anchors
         self.phrase = phrase
+        self._final_completion_spoken = False
         self.progress = progress or (lambda event: None)
         self.stop_event = stop_event or threading.Event()
         self.gate = TwoPhaseExecutionGate(session)
@@ -104,8 +105,15 @@ class CompetitionCoordinator:
             outcome = self.session.accept_recognition(result)
             self._emit(outcome, str(result["scene_description"]))
             if outcome == "task_1_completed":
-                suffix = "" if self.session.state == SessionState.COMPLETE else "，请更换下一张任务卡"
-                self._speak_best_effort(f"{result['scene_description']}。任务卡一识别完成{suffix}。")
+                if self.session.state == SessionState.COMPLETE:
+                    self._speak_best_effort(
+                        f"{result['scene_description']}。任务卡一识别完成，任务卡一和任务卡二均已完成。"
+                    )
+                    self._final_completion_spoken = True
+                else:
+                    self._speak_best_effort(
+                        f"{result['scene_description']}。任务卡一识别完成，请更换下一张任务卡。"
+                    )
             return
 
         prepared = self.gate.prepare(result, self.config_fingerprint)
@@ -165,6 +173,12 @@ class CompetitionCoordinator:
             if not command_matches(instruction, self.phrase):
                 self._emit("instruction_ignored", f"未命中任务卡触发规则：{instruction}")
                 continue
+            self._emit(
+                "command_matched",
+                f"任务卡拍照指令已命中：{instruction}",
+                instruction=instruction,
+                configured_phrase=self.phrase,
+            )
             wakeup_required = False
             request_id = f"{self.session_id}-{secrets.token_hex(8)}"
             self._emit("task_card_capture", "触发本次 MVS任务卡拍照。", request_id=request_id)
@@ -179,5 +193,6 @@ class CompetitionCoordinator:
                 continue
             self._check_stop()
             self._process_result(result)
-        self._speak_best_effort("任务卡一和任务卡二均已完成。")
+        if not self._final_completion_spoken:
+            self._speak_best_effort("任务卡一和任务卡二均已完成。")
         self._emit("competition_complete", "本场双任务卡流程完成。")

@@ -4,7 +4,7 @@
   "data_origin": "camera_vision",
   "usable_for_real_robot": true,
   "approved": true,
-  "calibration_id": "N9_BLOCKS_CDF2FB59B8DE",
+  "calibration_id": "N9_BLOCKS_170A061FF6D7",
   "robot_serial": "AUBO-i5H|192.168.34.10|rob1",
   "active_tcp": "flange_zero_tcp",
   "photo_point": "blocks_photo",
@@ -15,43 +15,43 @@
   "step_y_mm": 20.0,
   "homography_pixel_to_tool_mm": [
     [
-      0.0010651964894344995,
-      0.11206983537831075,
-      -192.41677531840693
+      0.001311243686089858,
+      0.11330410715359732,
+      -143.383485620229
     ],
     [
-      0.11170758356544554,
-      -0.0009957706067595935,
-      -138.04015582046569
+      0.11307733895362027,
+      -0.0017382152556829563,
+      -138.36434053660685
     ],
     [
-      5.774199602830657e-06,
-      -4.0115339369395255e-06,
+      6.542758211950184e-06,
+      6.99640526078167e-06,
       1.0
     ]
   ],
-  "rms_error_mm": 0.053726250082585685,
-  "max_error_mm": 0.08749004489997632,
+  "rms_error_mm": 0.051197003196926466,
+  "max_error_mm": 0.09137256644368172,
   "samples": [
     {
       "index": 1,
-      "pixel_u": 1070.267822265625,
-      "pixel_v": 1528.091064453125,
-      "tool_x_mm": -20.00621464772839,
-      "tool_y_mm": -20.002976511392657,
+      "pixel_u": 1060.11962890625,
+      "pixel_v": 1074.021240234375,
+      "tool_x_mm": -19.981917517666314,
+      "tool_y_mm": -20.028276511163185,
       "actual_tcp_pose": [
-        0.34295767662963994,
-        0.06124948742644477,
-        0.3995303159226128,
-        3.1403965940456158,
-        -0.0006222647899069559,
-        1.570488864226384
+        0.34300445050202244,
+        0.06196969864584065,
+        0.39989322565634994,
+        -3.1413350549256367,
+        0.0018908339309873154,
+        1.5720132584250197
       ],
       "frame_number": 1,
-      "captured_at": "2026-08-20T07:14:36.911052+00:00",
-      "image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-1-annotated.png",
-      "raw_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-1.png",
-      "annotated_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-1-annotated.png",
+      "captured_at": "2026-08-21T00:14:17.622651+00:00",
+      "image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-1-annotated.png",
+      "raw_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-1.png",
+      "annotated_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-1-annotated.png",
       "detection_summary": {
         "success": true,
         "colors": [
@@ -74,32 +74,32 @@
             "candidates": [
               {
                 "center": [
-                  1070.267822265625,
-                  1528.091064453125
+                  1060.11962890625,
+                  1074.021240234375
                 ],
                 "box": [
                   [
-                    932,
-                    1404
+                    910,
+                    956
                   ],
                   [
-                    1195,
-                    1390
+                    1178,
+                    925
                   ],
                   [
-                    1209,
-                    1652
+                    1210,
+                    1192
                   ],
                   [
-                    946,
-                    1666
+                    942,
+                    1223
                   ]
                 ],
-                "area_px": 68406.0,
-                "aspect": 0.9980047280403656,
-                "rectangularity": 0.9877523295331243,
-                "confidence": 0.9944163885628312,
-                "angle_deg": -3.012786865234375,
+                "area_px": 71478.0,
+                "aspect": 0.9968079454933761,
+                "rectangularity": 0.9849065297825221,
+                "confidence": 0.9926424499945772,
+                "angle_deg": -6.683860778808594,
                 "accepted": true,
                 "rejection_reasons": [],
                 "selected": true,
@@ -108,32 +108,32 @@
             ],
             "selected": {
               "center": [
-                1070.267822265625,
-                1528.091064453125
+                1060.11962890625,
+                1074.021240234375
               ],
               "box": [
                 [
-                  932,
-                  1404
+                  910,
+                  956
                 ],
                 [
-                  1195,
-                  1390
+                  1178,
+                  925
                 ],
                 [
-                  1209,
-                  1652
+                  1210,
+                  1192
                 ],
                 [
-                  946,
-                  1666
+                  942,
+                  1223
                 ]
               ],
-              "area_px": 68406.0,
-              "aspect": 0.9980047280403656,
-              "rectangularity": 0.9877523295331243,
-              "confidence": 0.9944163885628312,
-              "angle_deg": -3.012786865234375,
+              "area_px": 71478.0,
+              "aspect": 0.9968079454933761,
+              "rectangularity": 0.9849065297825221,
+              "confidence": 0.9926424499945772,
+              "angle_deg": -6.683860778808594,
               "accepted": true,
               "rejection_reasons": [],
               "selected": true,
@@ -142,29 +142,29 @@
           }
         ]
       },
-      "confidence": 0.9944163885628312,
-      "r_image_deg": -3.012786865234375,
-      "residual_mm": 0.016619080764789018
+      "confidence": 0.9926424499945772,
+      "r_image_deg": -6.683860778808594,
+      "residual_mm": 0.048815365645985966
     },
     {
       "index": 2,
-      "pixel_u": 1249.6461181640625,
-      "pixel_v": 1526.3345947265625,
-      "tool_x_mm": -19.9950863575869,
-      "tool_y_mm": 0.012407689065865868,
+      "pixel_u": 1240.37890625,
+      "pixel_v": 1072.163818359375,
+      "tool_x_mm": -19.99874539576951,
+      "tool_y_mm": -0.019936044531848607,
       "actual_tcp_pose": [
-        0.34296563249404005,
-        0.0812549068872582,
-        0.3995466577717669,
-        3.140387386036142,
-        -0.000640666852678826,
-        1.5704812492834967
+        0.3429830238484358,
+        0.0819762431801614,
+        0.3998569536944714,
+        -3.1413457733418695,
+        0.0018827660376533558,
+        1.5720174232094772
       ],
       "frame_number": 1,
-      "captured_at": "2026-08-20T07:14:40.405252+00:00",
-      "image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-2-annotated.png",
-      "raw_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-2.png",
-      "annotated_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-2-annotated.png",
+      "captured_at": "2026-08-21T00:14:21.203337+00:00",
+      "image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-2-annotated.png",
+      "raw_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-2.png",
+      "annotated_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-2-annotated.png",
       "detection_summary": {
         "success": true,
         "colors": [
@@ -187,371 +187,32 @@
             "candidates": [
               {
                 "center": [
-                  1249.6461181640625,
-                  1526.3345947265625
+                  1240.37890625,
+                  1072.163818359375
                 ],
                 "box": [
                   [
-                    1111,
-                    1402
+                    1091,
+                    954
                   ],
                   [
-                    1374,
-                    1388
-                  ],
-                  [
-                    1388,
-                    1650
-                  ],
-                  [
-                    1125,
-                    1664
-                  ]
-                ],
-                "area_px": 68287.0,
-                "aspect": 0.9964507209947486,
-                "rectangularity": 0.9886068585635922,
-                "confidence": 0.9937053691438439,
-                "angle_deg": -3.0610275268554688,
-                "accepted": true,
-                "rejection_reasons": [],
-                "selected": true,
-                "ignored_as_tiny_fragment": false
-              }
-            ],
-            "selected": {
-              "center": [
-                1249.6461181640625,
-                1526.3345947265625
-              ],
-              "box": [
-                [
-                  1111,
-                  1402
-                ],
-                [
-                  1374,
-                  1388
-                ],
-                [
-                  1388,
-                  1650
-                ],
-                [
-                  1125,
-                  1664
-                ]
-              ],
-              "area_px": 68287.0,
-              "aspect": 0.9964507209947486,
-              "rectangularity": 0.9886068585635922,
-              "confidence": 0.9937053691438439,
-              "angle_deg": -3.0610275268554688,
-              "accepted": true,
-              "rejection_reasons": [],
-              "selected": true,
-              "ignored_as_tiny_fragment": false
-            }
-          }
-        ]
-      },
-      "confidence": 0.9937053691438439,
-      "r_image_deg": -3.0610275268554688,
-      "residual_mm": 0.025778880646860118
-    },
-    {
-      "index": 3,
-      "pixel_u": 1428.1412353515625,
-      "pixel_v": 1524.2808837890625,
-      "tool_x_mm": -19.991039599375593,
-      "tool_y_mm": 20.013515912561925,
-      "actual_tcp_pose": [
-        0.3429712111840691,
-        0.10125454415116564,
-        0.39955979757410337,
-        3.140391141369572,
-        -0.0006444322411943184,
-        1.57048134625398
-      ],
-      "frame_number": 1,
-      "captured_at": "2026-08-20T07:14:43.941835+00:00",
-      "image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-3-annotated.png",
-      "raw_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-3.png",
-      "annotated_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-3-annotated.png",
-      "detection_summary": {
-        "success": true,
-        "colors": [
-          {
-            "color": "红",
-            "selection_policy": "strict",
-            "roi": [
-              0,
-              0,
-              3072,
-              2048
-            ],
-            "status": "success",
-            "error_code": null,
-            "warnings": [],
-            "candidate_count": 1,
-            "eligible_candidate_count": 1,
-            "ignored_tiny_fragment_count": 0,
-            "fragment_area_floor_px": 3.1457280000000005,
-            "candidates": [
-              {
-                "center": [
-                  1428.1412353515625,
-                  1524.2808837890625
-                ],
-                "box": [
-                  [
-                    1290,
-                    1400
-                  ],
-                  [
-                    1553,
-                    1387
-                  ],
-                  [
-                    1566,
-                    1649
-                  ],
-                  [
-                    1304,
-                    1662
-                  ]
-                ],
-                "area_px": 68087.5,
-                "aspect": 0.9980029483659658,
-                "rectangularity": 0.9881199348967535,
-                "confidence": 0.9945438936517415,
-                "angle_deg": -2.9108428955078125,
-                "accepted": true,
-                "rejection_reasons": [],
-                "selected": true,
-                "ignored_as_tiny_fragment": false
-              }
-            ],
-            "selected": {
-              "center": [
-                1428.1412353515625,
-                1524.2808837890625
-              ],
-              "box": [
-                [
-                  1290,
-                  1400
-                ],
-                [
-                  1553,
-                  1387
-                ],
-                [
-                  1566,
-                  1649
-                ],
-                [
-                  1304,
-                  1662
-                ]
-              ],
-              "area_px": 68087.5,
-              "aspect": 0.9980029483659658,
-              "rectangularity": 0.9881199348967535,
-              "confidence": 0.9945438936517415,
-              "angle_deg": -2.9108428955078125,
-              "accepted": true,
-              "rejection_reasons": [],
-              "selected": true,
-              "ignored_as_tiny_fragment": false
-            }
-          }
-        ]
-      },
-      "confidence": 0.9945438936517415,
-      "r_image_deg": -2.9108428955078125,
-      "residual_mm": 0.08749004489997632
-    },
-    {
-      "index": 4,
-      "pixel_u": 1430.615966796875,
-      "pixel_v": 1703.8853759765625,
-      "tool_x_mm": 0.012073112090338345,
-      "tool_y_mm": 20.000335133706056,
-      "actual_tcp_pose": [
-        0.36297220626641524,
-        0.10124432230728485,
-        0.3995837981419448,
-        3.140387183339493,
-        -0.0006417394782757582,
-        1.5704866460194489
-      ],
-      "frame_number": 1,
-      "captured_at": "2026-08-20T07:14:47.419853+00:00",
-      "image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-4-annotated.png",
-      "raw_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-4.png",
-      "annotated_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-4-annotated.png",
-      "detection_summary": {
-        "success": true,
-        "colors": [
-          {
-            "color": "红",
-            "selection_policy": "strict",
-            "roi": [
-              0,
-              0,
-              3072,
-              2048
-            ],
-            "status": "success",
-            "error_code": null,
-            "warnings": [],
-            "candidate_count": 1,
-            "eligible_candidate_count": 1,
-            "ignored_tiny_fragment_count": 0,
-            "fragment_area_floor_px": 3.1457280000000005,
-            "candidates": [
-              {
-                "center": [
-                  1430.615966796875,
-                  1703.8853759765625
-                ],
-                "box": [
-                  [
-                    1293,
-                    1580
-                  ],
-                  [
-                    1555,
-                    1566
-                  ],
-                  [
-                    1569,
-                    1828
-                  ],
-                  [
-                    1306,
-                    1842
-                  ]
-                ],
-                "area_px": 67997.0,
-                "aspect": 0.9978856404332428,
-                "rectangularity": 0.9863854277214084,
-                "confidence": 0.9938605659841007,
-                "angle_deg": -2.98663330078125,
-                "accepted": true,
-                "rejection_reasons": [],
-                "selected": true,
-                "ignored_as_tiny_fragment": false
-              }
-            ],
-            "selected": {
-              "center": [
-                1430.615966796875,
-                1703.8853759765625
-              ],
-              "box": [
-                [
-                  1293,
-                  1580
-                ],
-                [
-                  1555,
-                  1566
-                ],
-                [
-                  1569,
-                  1828
-                ],
-                [
-                  1306,
-                  1842
-                ]
-              ],
-              "area_px": 67997.0,
-              "aspect": 0.9978856404332428,
-              "rectangularity": 0.9863854277214084,
-              "confidence": 0.9938605659841007,
-              "angle_deg": -2.98663330078125,
-              "accepted": true,
-              "rejection_reasons": [],
-              "selected": true,
-              "ignored_as_tiny_fragment": false
-            }
-          }
-        ]
-      },
-      "confidence": 0.9938605659841007,
-      "r_image_deg": -2.98663330078125,
-      "residual_mm": 0.06654407335735901
-    },
-    {
-      "index": 5,
-      "pixel_u": 1251.359375,
-      "pixel_v": 1705.4544677734375,
-      "tool_x_mm": -0.006519629233758817,
-      "tool_y_mm": -0.005594707343736793,
-      "actual_tcp_pose": [
-        0.36296083162615467,
-        0.0812416576741957,
-        0.3995665652479294,
-        3.1404051890376476,
-        -0.0006340465680354282,
-        1.5704871678782326
-      ],
-      "frame_number": 1,
-      "captured_at": "2026-08-20T07:14:50.954204+00:00",
-      "image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-5-annotated.png",
-      "raw_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-5.png",
-      "annotated_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-5-annotated.png",
-      "detection_summary": {
-        "success": true,
-        "colors": [
-          {
-            "color": "红",
-            "selection_policy": "strict",
-            "roi": [
-              0,
-              0,
-              3072,
-              2048
-            ],
-            "status": "success",
-            "error_code": null,
-            "warnings": [],
-            "candidate_count": 1,
-            "eligible_candidate_count": 1,
-            "ignored_tiny_fragment_count": 0,
-            "fragment_area_floor_px": 3.1457280000000005,
-            "candidates": [
-              {
-                "center": [
-                  1251.359375,
-                  1705.4544677734375
-                ],
-                "box": [
-                  [
-                    1113,
-                    1581
-                  ],
-                  [
-                    1376,
-                    1567
+                    1359,
+                    923
                   ],
                   [
                     1390,
-                    1829
+                    1190
                   ],
                   [
-                    1127,
-                    1843
+                    1122,
+                    1221
                   ]
                 ],
-                "area_px": 68137.5,
-                "aspect": 0.9973348140952792,
-                "rectangularity": 0.9870775082078743,
-                "confidence": 0.9937447570346875,
-                "angle_deg": -3.0447769165039062,
+                "area_px": 71393.0,
+                "aspect": 0.9968837989126578,
+                "rectangularity": 0.9854000818634213,
+                "confidence": 0.992864497945425,
+                "angle_deg": -6.663230895996094,
                 "accepted": true,
                 "rejection_reasons": [],
                 "selected": true,
@@ -560,32 +221,32 @@
             ],
             "selected": {
               "center": [
-                1251.359375,
-                1705.4544677734375
+                1240.37890625,
+                1072.163818359375
               ],
               "box": [
                 [
-                  1113,
-                  1581
+                  1091,
+                  954
                 ],
                 [
-                  1376,
-                  1567
+                  1359,
+                  923
                 ],
                 [
                   1390,
-                  1829
+                  1190
                 ],
                 [
-                  1127,
-                  1843
+                  1122,
+                  1221
                 ]
               ],
-              "area_px": 68137.5,
-              "aspect": 0.9973348140952792,
-              "rectangularity": 0.9870775082078743,
-              "confidence": 0.9937447570346875,
-              "angle_deg": -3.0447769165039062,
+              "area_px": 71393.0,
+              "aspect": 0.9968837989126578,
+              "rectangularity": 0.9854000818634213,
+              "confidence": 0.992864497945425,
+              "angle_deg": -6.663230895996094,
               "accepted": true,
               "rejection_reasons": [],
               "selected": true,
@@ -594,29 +255,368 @@
           }
         ]
       },
-      "confidence": 0.9937447570346875,
-      "r_image_deg": -3.0447769165039062,
-      "residual_mm": 0.07508481764338783
+      "confidence": 0.992864497945425,
+      "r_image_deg": -6.663230895996094,
+      "residual_mm": 0.06067116367660429
+    },
+    {
+      "index": 3,
+      "pixel_u": 1419.6385498046875,
+      "pixel_v": 1069.2490234375,
+      "tool_x_mm": -20.02417658222627,
+      "tool_y_mm": 19.979119311540504,
+      "actual_tcp_pose": [
+        0.3429574890057521,
+        0.10197733455248917,
+        0.39981936373653354,
+        -3.1413442704472723,
+        0.0018824089330660657,
+        1.5720237765675436
+      ],
+      "frame_number": 1,
+      "captured_at": "2026-08-21T00:14:24.790562+00:00",
+      "image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-3-annotated.png",
+      "raw_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-3.png",
+      "annotated_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-3-annotated.png",
+      "detection_summary": {
+        "success": true,
+        "colors": [
+          {
+            "color": "红",
+            "selection_policy": "strict",
+            "roi": [
+              0,
+              0,
+              3072,
+              2048
+            ],
+            "status": "success",
+            "error_code": null,
+            "warnings": [],
+            "candidate_count": 1,
+            "eligible_candidate_count": 1,
+            "ignored_tiny_fragment_count": 0,
+            "fragment_area_floor_px": 3.1457280000000005,
+            "candidates": [
+              {
+                "center": [
+                  1419.6385498046875,
+                  1069.2490234375
+                ],
+                "box": [
+                  [
+                    1270,
+                    952
+                  ],
+                  [
+                    1537,
+                    920
+                  ],
+                  [
+                    1569,
+                    1187
+                  ],
+                  [
+                    1302,
+                    1218
+                  ]
+                ],
+                "area_px": 71130.5,
+                "aspect": 0.9985302113391348,
+                "rectangularity": 0.9846831851055411,
+                "confidence": 0.9936837521573769,
+                "angle_deg": -6.7570953369140625,
+                "accepted": true,
+                "rejection_reasons": [],
+                "selected": true,
+                "ignored_as_tiny_fragment": false
+              }
+            ],
+            "selected": {
+              "center": [
+                1419.6385498046875,
+                1069.2490234375
+              ],
+              "box": [
+                [
+                  1270,
+                  952
+                ],
+                [
+                  1537,
+                  920
+                ],
+                [
+                  1569,
+                  1187
+                ],
+                [
+                  1302,
+                  1218
+                ]
+              ],
+              "area_px": 71130.5,
+              "aspect": 0.9985302113391348,
+              "rectangularity": 0.9846831851055411,
+              "confidence": 0.9936837521573769,
+              "angle_deg": -6.7570953369140625,
+              "accepted": true,
+              "rejection_reasons": [],
+              "selected": true,
+              "ignored_as_tiny_fragment": false
+            }
+          }
+        ]
+      },
+      "confidence": 0.9936837521573769,
+      "r_image_deg": -6.7570953369140625,
+      "residual_mm": 0.0140291061133647
+    },
+    {
+      "index": 4,
+      "pixel_u": 1422.5223388671875,
+      "pixel_v": 1248.65576171875,
+      "tool_x_mm": -0.021540231648353725,
+      "tool_y_mm": 19.997176311220347,
+      "actual_tcp_pose": [
+        0.36295926174537063,
+        0.10199398662559403,
+        0.3998141643891491,
+        -3.141350147540773,
+        0.001891710767338191,
+        1.5720091487399432
+      ],
+      "frame_number": 1,
+      "captured_at": "2026-08-21T00:14:28.391192+00:00",
+      "image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-4-annotated.png",
+      "raw_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-4.png",
+      "annotated_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-4-annotated.png",
+      "detection_summary": {
+        "success": true,
+        "colors": [
+          {
+            "color": "红",
+            "selection_policy": "strict",
+            "roi": [
+              0,
+              0,
+              3072,
+              2048
+            ],
+            "status": "success",
+            "error_code": null,
+            "warnings": [],
+            "candidate_count": 1,
+            "eligible_candidate_count": 1,
+            "ignored_tiny_fragment_count": 0,
+            "fragment_area_floor_px": 3.1457280000000005,
+            "candidates": [
+              {
+                "center": [
+                  1422.5223388671875,
+                  1248.65576171875
+                ],
+                "box": [
+                  [
+                    1273,
+                    1132
+                  ],
+                  [
+                    1540,
+                    1100
+                  ],
+                  [
+                    1572,
+                    1366
+                  ],
+                  [
+                    1305,
+                    1398
+                  ]
+                ],
+                "area_px": 70980.5,
+                "aspect": 0.9967754712462874,
+                "rectangularity": 0.9848508812578622,
+                "confidence": 0.9926018647503386,
+                "angle_deg": -6.826866149902344,
+                "accepted": true,
+                "rejection_reasons": [],
+                "selected": true,
+                "ignored_as_tiny_fragment": false
+              }
+            ],
+            "selected": {
+              "center": [
+                1422.5223388671875,
+                1248.65576171875
+              ],
+              "box": [
+                [
+                  1273,
+                  1132
+                ],
+                [
+                  1540,
+                  1100
+                ],
+                [
+                  1572,
+                  1366
+                ],
+                [
+                  1305,
+                  1398
+                ]
+              ],
+              "area_px": 70980.5,
+              "aspect": 0.9967754712462874,
+              "rectangularity": 0.9848508812578622,
+              "confidence": 0.9926018647503386,
+              "angle_deg": -6.826866149902344,
+              "accepted": true,
+              "rejection_reasons": [],
+              "selected": true,
+              "ignored_as_tiny_fragment": false
+            }
+          }
+        ]
+      },
+      "confidence": 0.9926018647503386,
+      "r_image_deg": -6.826866149902344,
+      "residual_mm": 0.04125297288003232
+    },
+    {
+      "index": 5,
+      "pixel_u": 1242.6656494140625,
+      "pixel_v": 1250.656982421875,
+      "tool_x_mm": -0.003347829223399046,
+      "tool_y_mm": -0.007676909535930809,
+      "actual_tcp_pose": [
+        0.36297973232296105,
+        0.08199174818376918,
+        0.3998515659540826,
+        -3.1413436201132052,
+        0.0018957903305417858,
+        1.5720118618345238
+      ],
+      "frame_number": 1,
+      "captured_at": "2026-08-21T00:14:31.981533+00:00",
+      "image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-5-annotated.png",
+      "raw_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-5.png",
+      "annotated_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-5-annotated.png",
+      "detection_summary": {
+        "success": true,
+        "colors": [
+          {
+            "color": "红",
+            "selection_policy": "strict",
+            "roi": [
+              0,
+              0,
+              3072,
+              2048
+            ],
+            "status": "success",
+            "error_code": null,
+            "warnings": [],
+            "candidate_count": 1,
+            "eligible_candidate_count": 1,
+            "ignored_tiny_fragment_count": 0,
+            "fragment_area_floor_px": 3.1457280000000005,
+            "candidates": [
+              {
+                "center": [
+                  1242.6656494140625,
+                  1250.656982421875
+                ],
+                "box": [
+                  [
+                    1093,
+                    1133
+                  ],
+                  [
+                    1361,
+                    1102
+                  ],
+                  [
+                    1392,
+                    1368
+                  ],
+                  [
+                    1124,
+                    1400
+                  ]
+                ],
+                "area_px": 71254.5,
+                "aspect": 0.9945816145789993,
+                "rectangularity": 0.9860167404077592,
+                "confidence": 0.9915839086190652,
+                "angle_deg": -6.7098388671875,
+                "accepted": true,
+                "rejection_reasons": [],
+                "selected": true,
+                "ignored_as_tiny_fragment": false
+              }
+            ],
+            "selected": {
+              "center": [
+                1242.6656494140625,
+                1250.656982421875
+              ],
+              "box": [
+                [
+                  1093,
+                  1133
+                ],
+                [
+                  1361,
+                  1102
+                ],
+                [
+                  1392,
+                  1368
+                ],
+                [
+                  1124,
+                  1400
+                ]
+              ],
+              "area_px": 71254.5,
+              "aspect": 0.9945816145789993,
+              "rectangularity": 0.9860167404077592,
+              "confidence": 0.9915839086190652,
+              "angle_deg": -6.7098388671875,
+              "accepted": true,
+              "rejection_reasons": [],
+              "selected": true,
+              "ignored_as_tiny_fragment": false
+            }
+          }
+        ]
+      },
+      "confidence": 0.9915839086190652,
+      "r_image_deg": -6.7098388671875,
+      "residual_mm": 0.04710763149980901
     },
     {
       "index": 6,
-      "pixel_u": 1072.1395263671875,
-      "pixel_v": 1706.8956298828125,
-      "tool_x_mm": -0.012117467227290568,
-      "tool_y_mm": -20.00507486772557,
+      "pixel_u": 1063.5489501953125,
+      "pixel_v": 1254.07421875,
+      "tool_x_mm": 0.019577820224603304,
+      "tool_y_mm": -20.007742821997237,
       "actual_tcp_pose": [
-        0.36295425156178984,
-        0.061241674060523825,
-        0.39955544450142527,
-        3.1404027860309744,
-        -0.0006367629480494637,
-        1.5704887719171226
+        0.363004701666537,
+        0.06199111566332148,
+        0.39988712117854136,
+        -3.141339149927715,
+        0.0018989326248902143,
+        1.5720068411784662
       ],
       "frame_number": 1,
-      "captured_at": "2026-08-20T07:14:54.454222+00:00",
-      "image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-6-annotated.png",
-      "raw_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-6.png",
-      "annotated_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-6-annotated.png",
+      "captured_at": "2026-08-21T00:14:35.589317+00:00",
+      "image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-6-annotated.png",
+      "raw_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-6.png",
+      "annotated_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-6-annotated.png",
       "detection_summary": {
         "success": true,
         "colors": [
@@ -639,32 +639,32 @@
             "candidates": [
               {
                 "center": [
-                  1072.1395263671875,
-                  1706.8956298828125
+                  1063.5489501953125,
+                  1254.07421875
                 ],
                 "box": [
                   [
-                    934,
-                    1583
+                    914,
+                    1137
                   ],
                   [
-                    1196,
-                    1569
+                    1182,
+                    1105
                   ],
                   [
-                    1211,
-                    1831
+                    1214,
+                    1371
                   ],
                   [
-                    948,
-                    1845
+                    946,
+                    1404
                   ]
                 ],
-                "area_px": 68205.5,
-                "aspect": 0.9970218641300737,
-                "rectangularity": 0.9876705311421118,
-                "confidence": 0.993748897584287,
-                "angle_deg": -3.07745361328125,
+                "area_px": 71356.0,
+                "aspect": 0.9955851587149013,
+                "rectangularity": 0.9841527836121507,
+                "confidence": 0.9915838274289386,
+                "angle_deg": -6.8427734375,
                 "accepted": true,
                 "rejection_reasons": [],
                 "selected": true,
@@ -673,32 +673,32 @@
             ],
             "selected": {
               "center": [
-                1072.1395263671875,
-                1706.8956298828125
+                1063.5489501953125,
+                1254.07421875
               ],
               "box": [
                 [
-                  934,
-                  1583
+                  914,
+                  1137
                 ],
                 [
-                  1196,
-                  1569
+                  1182,
+                  1105
                 ],
                 [
-                  1211,
-                  1831
+                  1214,
+                  1371
                 ],
                 [
-                  948,
-                  1845
+                  946,
+                  1404
                 ]
               ],
-              "area_px": 68205.5,
-              "aspect": 0.9970218641300737,
-              "rectangularity": 0.9876705311421118,
-              "confidence": 0.993748897584287,
-              "angle_deg": -3.07745361328125,
+              "area_px": 71356.0,
+              "aspect": 0.9955851587149013,
+              "rectangularity": 0.9841527836121507,
+              "confidence": 0.9915838274289386,
+              "angle_deg": -6.8427734375,
               "accepted": true,
               "rejection_reasons": [],
               "selected": true,
@@ -707,29 +707,29 @@
           }
         ]
       },
-      "confidence": 0.993748897584287,
-      "r_image_deg": -3.07745361328125,
-      "residual_mm": 0.03417674356793442
+      "confidence": 0.9915838274289386,
+      "r_image_deg": -6.8427734375,
+      "residual_mm": 0.09137256644368172
     },
     {
       "index": 7,
-      "pixel_u": 1073.434814453125,
-      "pixel_v": 1884.8038330078125,
-      "tool_x_mm": 20.00042314684869,
-      "tool_y_mm": -20.007037781428142,
+      "pixel_u": 1065.6680908203125,
+      "pixel_v": 1432.48828125,
+      "tool_x_mm": 20.027628305031797,
+      "tool_y_mm": -19.978485358519627,
       "actual_tcp_pose": [
-        0.38296012429615367,
-        0.06123801839619917,
-        0.3995823942299984,
-        3.1403856662403675,
-        -0.000638570953821826,
-        1.5704859599942969
+        0.38300674631667114,
+        0.06201849456484426,
+        0.39988556914698264,
+        -3.14135353500942,
+        0.0018906597024513382,
+        1.572010969129404
       ],
       "frame_number": 1,
-      "captured_at": "2026-08-20T07:14:57.964289+00:00",
-      "image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-7-annotated.png",
-      "raw_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-7.png",
-      "annotated_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-7-annotated.png",
+      "captured_at": "2026-08-21T00:14:39.206398+00:00",
+      "image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-7-annotated.png",
+      "raw_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-7.png",
+      "annotated_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-7-annotated.png",
       "detection_summary": {
         "success": true,
         "colors": [
@@ -752,32 +752,32 @@
             "candidates": [
               {
                 "center": [
-                  1073.434814453125,
-                  1884.8038330078125
+                  1065.6680908203125,
+                  1432.48828125
                 ],
                 "box": [
                   [
-                    935,
-                    1761
+                    916,
+                    1315
                   ],
                   [
-                    1198,
-                    1747
+                    1184,
+                    1284
                   ],
                   [
-                    1212,
-                    2008
+                    1215,
+                    1550
                   ],
                   [
-                    949,
-                    2023
+                    947,
+                    1581
                   ]
                 ],
-                "area_px": 68112.0,
-                "aspect": 0.9948960166577395,
-                "rectangularity": 0.9880645269646258,
-                "confidence": 0.9925049952651497,
-                "angle_deg": -3.12213134765625,
+                "area_px": 71151.5,
+                "aspect": 0.9947178288386399,
+                "rectangularity": 0.9838601397932428,
+                "confidence": 0.9909176376727509,
+                "angle_deg": -6.639472961425781,
                 "accepted": true,
                 "rejection_reasons": [],
                 "selected": true,
@@ -786,32 +786,32 @@
             ],
             "selected": {
               "center": [
-                1073.434814453125,
-                1884.8038330078125
+                1065.6680908203125,
+                1432.48828125
               ],
               "box": [
                 [
-                  935,
-                  1761
+                  916,
+                  1315
                 ],
                 [
-                  1198,
-                  1747
+                  1184,
+                  1284
                 ],
                 [
-                  1212,
-                  2008
+                  1215,
+                  1550
                 ],
                 [
-                  949,
-                  2023
+                  947,
+                  1581
                 ]
               ],
-              "area_px": 68112.0,
-              "aspect": 0.9948960166577395,
-              "rectangularity": 0.9880645269646258,
-              "confidence": 0.9925049952651497,
-              "angle_deg": -3.12213134765625,
+              "area_px": 71151.5,
+              "aspect": 0.9947178288386399,
+              "rectangularity": 0.9838601397932428,
+              "confidence": 0.9909176376727509,
+              "angle_deg": -6.639472961425781,
               "accepted": true,
               "rejection_reasons": [],
               "selected": true,
@@ -820,29 +820,29 @@
           }
         ]
       },
-      "confidence": 0.9925049952651497,
-      "r_image_deg": -3.12213134765625,
-      "residual_mm": 0.03137643993255778
+      "confidence": 0.9909176376727509,
+      "r_image_deg": -6.639472961425781,
+      "residual_mm": 0.05694622808680265
     },
     {
       "index": 8,
-      "pixel_u": 1252.005126953125,
-      "pixel_v": 1883.21875,
-      "tool_x_mm": 20.005773925230397,
-      "tool_y_mm": 0.000276305135757382,
+      "pixel_u": 1246.0601806640625,
+      "pixel_v": 1430.8328857421875,
+      "tool_x_mm": 20.002248706620097,
+      "tool_y_mm": 0.02699818497314821,
       "actual_tcp_pose": [
-        0.38296563320371935,
-        0.08124238974748807,
-        0.3995952726694565,
-        3.1403851868445503,
-        -0.000641190161561441,
-        1.5704810090580033
+        0.38298319540978376,
+        0.08202401249127157,
+        0.39984704100083024,
+        -3.1413480657189536,
+        0.0018856876762742701,
+        1.572016253343287
       ],
       "frame_number": 1,
-      "captured_at": "2026-08-20T07:15:01.427074+00:00",
-      "image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-8-annotated.png",
-      "raw_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-8.png",
-      "annotated_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-8-annotated.png",
+      "captured_at": "2026-08-21T00:14:42.827513+00:00",
+      "image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-8-annotated.png",
+      "raw_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-8.png",
+      "annotated_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-8-annotated.png",
       "detection_summary": {
         "success": true,
         "colors": [
@@ -865,32 +865,32 @@
             "candidates": [
               {
                 "center": [
-                  1252.005126953125,
-                  1883.21875
+                  1246.0601806640625,
+                  1430.8328857421875
                 ],
                 "box": [
                   [
-                    1113,
-                    1760
+                    1096,
+                    1314
                   ],
                   [
-                    1376,
-                    1745
+                    1364,
+                    1282
                   ],
                   [
-                    1391,
-                    2007
+                    1396,
+                    1547
                   ],
                   [
                     1128,
-                    2021
+                    1580
                   ]
                 ],
-                "area_px": 68063.0,
-                "aspect": 0.9926825258063209,
-                "rectangularity": 0.9870293212310514,
-                "confidence": 0.9907039042049766,
-                "angle_deg": -3.1363601684570312,
+                "area_px": 70963.0,
+                "aspect": 0.991747769382783,
+                "rectangularity": 0.9851272771837964,
+                "confidence": 0.9894305971131376,
+                "angle_deg": -6.8427734375,
                 "accepted": true,
                 "rejection_reasons": [],
                 "selected": true,
@@ -899,32 +899,32 @@
             ],
             "selected": {
               "center": [
-                1252.005126953125,
-                1883.21875
+                1246.0601806640625,
+                1430.8328857421875
               ],
               "box": [
                 [
-                  1113,
-                  1760
+                  1096,
+                  1314
                 ],
                 [
-                  1376,
-                  1745
+                  1364,
+                  1282
                 ],
                 [
-                  1391,
-                  2007
+                  1396,
+                  1547
                 ],
                 [
                   1128,
-                  2021
+                  1580
                 ]
               ],
-              "area_px": 68063.0,
-              "aspect": 0.9926825258063209,
-              "rectangularity": 0.9870293212310514,
-              "confidence": 0.9907039042049766,
-              "angle_deg": -3.1363601684570312,
+              "area_px": 70963.0,
+              "aspect": 0.991747769382783,
+              "rectangularity": 0.9851272771837964,
+              "confidence": 0.9894305971131376,
+              "angle_deg": -6.8427734375,
               "accepted": true,
               "rejection_reasons": [],
               "selected": true,
@@ -933,29 +933,29 @@
           }
         ]
       },
-      "confidence": 0.9907039042049766,
-      "r_image_deg": -3.1363601684570312,
-      "residual_mm": 0.06481178394919716
+      "confidence": 0.9894305971131376,
+      "r_image_deg": -6.8427734375,
+      "residual_mm": 0.022213941286374328
     },
     {
       "index": 9,
-      "pixel_u": 1431.88671875,
-      "pixel_v": 1881.84814453125,
-      "tool_x_mm": 20.010761734405246,
-      "tool_y_mm": 19.99904390663562,
+      "pixel_u": 1426.2645263671875,
+      "pixel_v": 1428.998291015625,
+      "tool_x_mm": 19.97823036232804,
+      "tool_y_mm": 20.027299165440798,
       "actual_tcp_pose": [
-        0.38297132122852845,
-        0.10124171697804206,
-        0.3996081584853405,
-        3.1403872097263585,
-        -0.0006412554133202285,
-        1.570482538007182
+        0.38295867168262776,
+        0.10202676307150864,
+        0.3998087672749641,
+        -3.1413476534172773,
+        0.0018858389583946292,
+        1.5720224921078128
       ],
       "frame_number": 1,
-      "captured_at": "2026-08-20T07:15:04.938533+00:00",
-      "image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-9-annotated.png",
-      "raw_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-9.png",
-      "annotated_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/point-9-annotated.png",
+      "captured_at": "2026-08-21T00:14:46.450405+00:00",
+      "image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-9-annotated.png",
+      "raw_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-9.png",
+      "annotated_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/point-9-annotated.png",
       "detection_summary": {
         "success": true,
         "colors": [
@@ -978,32 +978,32 @@
             "candidates": [
               {
                 "center": [
-                  1431.88671875,
-                  1881.84814453125
+                  1426.2645263671875,
+                  1428.998291015625
                 ],
                 "box": [
                   [
-                    1294,
-                    1758
+                    1277,
+                    1312
                   ],
                   [
-                    1556,
-                    1744
+                    1544,
+                    1281
                   ],
                   [
-                    1570,
-                    2006
+                    1575,
+                    1546
                   ],
                   [
                     1308,
-                    2020
+                    1577
                   ]
                 ],
-                "area_px": 67813.5,
-                "aspect": 0.9964013765799624,
-                "rectangularity": 0.9846981199701917,
-                "confidence": 0.9923052367665428,
-                "angle_deg": -3.012786865234375,
+                "area_px": 70808.0,
+                "aspect": 0.9934853205884742,
+                "rectangularity": 0.9847572986848345,
+                "confidence": 0.9904305129222002,
+                "angle_deg": -6.7098388671875,
                 "accepted": true,
                 "rejection_reasons": [],
                 "selected": true,
@@ -1012,32 +1012,32 @@
             ],
             "selected": {
               "center": [
-                1431.88671875,
-                1881.84814453125
+                1426.2645263671875,
+                1428.998291015625
               ],
               "box": [
                 [
-                  1294,
-                  1758
+                  1277,
+                  1312
                 ],
                 [
-                  1556,
-                  1744
+                  1544,
+                  1281
                 ],
                 [
-                  1570,
-                  2006
+                  1575,
+                  1546
                 ],
                 [
                   1308,
-                  2020
+                  1577
                 ]
               ],
-              "area_px": 67813.5,
-              "aspect": 0.9964013765799624,
-              "rectangularity": 0.9846981199701917,
-              "confidence": 0.9923052367665428,
-              "angle_deg": -3.012786865234375,
+              "area_px": 70808.0,
+              "aspect": 0.9934853205884742,
+              "rectangularity": 0.9847572986848345,
+              "confidence": 0.9904305129222002,
+              "angle_deg": -6.7098388671875,
               "accepted": true,
               "rejection_reasons": [],
               "selected": true,
@@ -1046,56 +1046,56 @@
           }
         ]
       },
-      "confidence": 0.9923052367665428,
-      "r_image_deg": -3.012786865234375,
-      "residual_mm": 0.03105471590595836
+      "confidence": 0.9904305129222002,
+      "r_image_deg": -6.7098388671875,
+      "residual_mm": 0.03637633416789108
     }
   ],
   "reference_detections": {
     "红": {
-      "pixel_u": 1251.359375,
-      "pixel_v": 1705.4544677734375,
-      "r_image_deg": -3.0447769165039062,
-      "confidence": 0.9937447570346875
+      "pixel_u": 1242.6656494140625,
+      "pixel_v": 1250.656982421875,
+      "r_image_deg": -6.7098388671875,
+      "confidence": 0.9915839086190652
     },
     "橙": {
-      "pixel_u": 866.3444213867188,
-      "pixel_v": 413.1038818359375,
-      "r_image_deg": -22.425857543945312,
-      "confidence": 0.9953472979457755
+      "pixel_u": 1416.6546630859375,
+      "pixel_v": 799.2879028320312,
+      "r_image_deg": 2.02136492729187,
+      "confidence": 0.992457100047803
     },
     "黄": {
-      "pixel_u": 659.9950561523438,
-      "pixel_v": 1604.088623046875,
-      "r_image_deg": 12.619321823120117,
-      "confidence": 0.9950682089580845
+      "pixel_u": 1000.3529663085938,
+      "pixel_v": 330.2928161621094,
+      "r_image_deg": -14.981636047363281,
+      "confidence": 0.9899523723755151
     },
     "绿": {
-      "pixel_u": 727.0856323242188,
-      "pixel_v": 976.0231323242188,
-      "r_image_deg": -4.661872863769531,
-      "confidence": 0.9824174837802848
+      "pixel_u": 1419.0440673828125,
+      "pixel_v": 1635.7723388671875,
+      "r_image_deg": 11.0035400390625,
+      "confidence": 0.9919527033691484
     },
     "蓝": {
-      "pixel_u": 1422.221435546875,
-      "pixel_v": 482.2966613769531,
-      "r_image_deg": 2.436648368835449,
-      "confidence": 0.9928422959316321
+      "pixel_u": 706.4945068359375,
+      "pixel_v": 940.2846069335938,
+      "r_image_deg": 5.799217224121094,
+      "confidence": 0.9889268014453797
     },
     "紫": {
-      "pixel_u": 1332.5003662109375,
-      "pixel_v": 1135.02490234375,
-      "r_image_deg": -0.7117080688476562,
-      "confidence": 0.9901875476853466
+      "pixel_u": 644.4238891601562,
+      "pixel_v": 1497.16943359375,
+      "r_image_deg": 17.543256759643555,
+      "confidence": 0.9924629093766505
     }
   },
-  "reference_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/six-color-reference.png",
-  "reference_annotated_image_path": "data/sessions/nine-blocks-20260820-151429-773303/calibration/blocks/six-color-reference-annotated.png",
+  "reference_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/six-color-reference.png",
+  "reference_annotated_image_path": "data/sessions/nine-blocks-20260821-081412-168080/calibration/blocks/six-color-reference-annotated.png",
   "direction_validation": {
     "skipped": true,
     "reason": "operator_requested_direct_activation_after_nine_point"
   },
-  "created_at": "2026-08-20T07:15:07.369691+00:00",
-  "approved_at": "2026-08-20T07:15:07.387147+00:00",
+  "created_at": "2026-08-21T00:14:49.054722+00:00",
+  "approved_at": "2026-08-21T00:14:49.065200+00:00",
   "approval_source": "operator_skipped_direction_validation"
 }

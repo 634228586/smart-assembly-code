@@ -47,6 +47,18 @@ class SpeechClientTest(unittest.TestCase):
         speak(ENDPOINT, "测试成功")
 
     @patch("voice.speech_client._request")
+    def test_tts_uses_requested_timeout_without_transport_retry(self, request) -> None:
+        request.return_value = {
+            "ok": True, "message": "tts ok",
+            "result_digest": {"tts_backend": "piper", "spoken_text": "测试成功"},
+        }
+
+        speak(ENDPOINT, "测试成功", timeout_s=30.0, retry_remote_disconnect=False)
+
+        self.assertEqual(request.call_args.args[4], 30.0)
+        self.assertFalse(request.call_args.kwargs["retry_remote_disconnect"])
+
+    @patch("voice.speech_client._request")
     def test_tts_skipped_is_not_success(self, request) -> None:
         request.return_value = {
             "ok": True, "message": "tts skipped due to unavailable runtime",

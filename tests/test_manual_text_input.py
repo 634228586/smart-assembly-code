@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import unittest
+from unittest.mock import Mock
 
 from app.manual_text_input import CountdownInput, ManualTextInput, ManualTextInputStopped
 
@@ -71,6 +72,21 @@ class ManualTextInputTest(unittest.TestCase):
                 progress=lambda _event: None,
                 on_wakeup=lambda: None,
             )
+
+    def test_second_task_card_uses_separate_twelve_second_delay(self) -> None:
+        channel = CountdownInput(
+            wakeup_delay_s=5.0,
+            command_delay_s=5.0,
+            next_command_delay_s=12.0,
+        )
+        countdown = Mock()
+        channel._countdown = countdown  # type: ignore[method-assign]
+        stop_event = threading.Event()
+
+        channel.listen(True, stop_event=stop_event, progress=lambda _event: None, on_wakeup=lambda: None)
+        channel.listen(False, stop_event=stop_event, progress=lambda _event: None, on_wakeup=lambda: None)
+
+        self.assertEqual([call.args[0] for call in countdown.call_args_list], [5.0, 5.0, 12.0])
 
 
 if __name__ == "__main__":

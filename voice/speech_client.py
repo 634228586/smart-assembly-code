@@ -72,10 +72,18 @@ def listen(endpoint: Endpoint, *, wakeup_required: bool, timeout_s: float) -> st
     return instruction.strip()
 
 
-def speak(endpoint: Endpoint, text: str) -> None:
+def speak(
+    endpoint: Endpoint,
+    text: str,
+    *,
+    timeout_s: float = 90.0,
+    retry_remote_disconnect: bool = True,
+) -> None:
+    if timeout_s <= 0:
+        raise ValueError("TTS超时秒数必须大于0。")
     result = _request(
-        endpoint, "POST", endpoint.routes["tts"], {"text": text}, 90.0,
-        retry_remote_disconnect=True,
+        endpoint, "POST", endpoint.routes["tts"], {"text": text}, float(timeout_s),
+        retry_remote_disconnect=retry_remote_disconnect,
     )
     if result.get("ok") is not True:
         raise SpeechError(f"TTS失败 [{result.get('error_code', 'TTS_ERROR')}]：{result.get('message', '')}")
